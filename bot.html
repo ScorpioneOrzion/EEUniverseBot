@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EEUniverse Editor</title>
+  <style>
+    #gameDraw {
+      width: 100vw;
+      height: 100vh;
+      --left: 0;
+      --top: 0;
+      background-color: var(--backGround);
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      --backGround: #CCC;
+      --minimap: rgb(160, 160, 160);
+    }
+
+    #minimap {
+      z-index: 2;
+      background-color: var(--minimap);
+      position: absolute;
+      width: calc(var(--width) * 2px);
+      height: calc(var(--height) * 2px);
+      top: 1vh;
+      left: 1vw;
+    }
+  </style>
+  <script src="EEUbot.js" defer type="module"></script>
+</head>
+
+<body>
+  <canvas id="gameDraw"></canvas>
+  <canvas id="minimap"></canvas>
+</body>
+
+</html>
