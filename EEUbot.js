@@ -34,6 +34,8 @@ const blockLayers = {
 
 const gameCanvas = document.querySelector("body > canvas:nth-child(1)")
 const gameCtx = gameCanvas.getContext("2d");
+const miniMapCanvas = document.querySelector("body > canvas:nth-child(2)")
+const miniMapCtx = miniMapCanvas.getContext("2d");
 
 let lastTime = 0;
 
@@ -79,6 +81,8 @@ function checkDraw(x, y) {
 function draw() {
   if (gameCanvas.height !== window.innerHeight) gameCanvas.height = window.innerHeight
   if (gameCanvas.width !== window.innerWidth) gameCanvas.width = window.innerWidth
+  if (miniMapCanvas.height !== constants.height * 2) miniMapCanvas.height = constants.height * 2
+  if (miniMapCanvas.width !== constants.width * 2) miniMapCanvas.width = constants.width * 2
 
   clear()
   drawBackground()
@@ -87,6 +91,7 @@ function draw() {
 
 function clear() {
   gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+  miniMapCtx.clearRect(0, 0, miniMapCanvas.width, miniMapCanvas.height);
 }
 
 function drawBackground() {
@@ -104,16 +109,27 @@ function drawBackground() {
 function drawBlocks() {
   for (const [key, id] of constants.blocks[0]) {
     drawBlock(id, ...key.split(","))
+    drawMiniMap(id, ...key.split(","))
   }
 
   for (const [key, id] of constants.blocks[1]) {
     drawBlock(id, ...key.split(","))
+    drawMiniMap(id, ...key.split(","))
   }
 }
 
 function drawBlock(id, x, y) {
   if (checkDraw((x - constants.x) * 24, (y - constants.y) * 24))
     gameCtx.drawImage(image, (id & 15) * 24, Math.floor(id / 16) * 24, 24, 24, (x - constants.x) * 24, (y - constants.y) * 24, 24, 24)
+}
+
+function drawMiniMap(id, x, y) {
+  if (mapColor.get(id) == -1) return
+  miniMapCtx.beginPath()
+  miniMapCtx.rect(x * 2, y * 2, 2, 2)
+  if (mapColor.get(id) == -2) miniMapCtx.fillStyle = "#000000"
+  else miniMapCtx.fillStyle = "#" + mapColor.get(id).toString(16)
+  miniMapCtx.fill()
 }
 
 function placeBlocks() {
