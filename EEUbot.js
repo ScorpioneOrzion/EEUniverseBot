@@ -2,6 +2,19 @@ import { mapColor } from './mapcolor.js'
 import { args } from './arguments.js'
 console.log(mapColor, args)
 
+const top = document.querySelector('#topUi')
+const bottom = document.querySelector('#bottomUi')
+
+document.querySelectorAll('.ui.bottom>div:nth-child(1)>button').forEach(element => {
+  element.onclick = () => {
+    document.querySelector('button.selected').classList.remove('selected')
+    element.classList.add('selected')
+  }
+})
+
+if (document.querySelector('button.selected') == null)
+  document.querySelector('.ui.bottom>div:nth-child(1)>button:nth-child(1)').classList.add('selected')
+
 const image = new Image()
 image.src = './AllBlocks.png'
 const ground = new Image()
@@ -20,9 +33,9 @@ const constants = {
 window.constants = constants
 
 function findBlock(id) {
-  if (blockLayers.bg.some(list => list[1] >= id && list[0] <= id)) return 0;
-  if (blockLayers.fg.some(list => list[1] >= id && list[0] <= id)) return 1;
-  if (blockLayers.ac.some(list => list[1] >= id && list[0] <= id)) return 1;
+  if (blockLayers.bg.some(list => list[1] >= id && list[0] <= id)) return [0, 0];
+  if (blockLayers.fg.some(list => list[1] >= id && list[0] <= id)) return [1, 1];
+  if (blockLayers.ac.some(list => list[1] >= id && list[0] <= id)) return [1, 2];
   return null;
 }
 
@@ -52,10 +65,10 @@ main()
 
 function moveScreen() {
   const speed = 0.4
-  const left = constants.keyboard.has(37) || constants.keyboard.has(65)
-  const right = constants.keyboard.has(39) || constants.keyboard.has(68)
-  const down = constants.keyboard.has(38) || constants.keyboard.has(87)
-  const up = constants.keyboard.has(40) || constants.keyboard.has(83)
+  const left = ck("has", 37) || ck("has", 65)
+  const right = ck("has", 39) || ck("has", 68)
+  const down = ck("has", 38) || ck("has", 87)
+  const up = ck("has", 40) || ck("has", 83)
   if (down ^ up) {
     if (down) {
       constants.y -= speed
@@ -120,7 +133,7 @@ function drawBlocks() {
 
 function drawBlock(id, x, y) {
   if (checkDraw((x - constants.x) * 24, (y - constants.y) * 24))
-    gameCtx.drawImage(image, (id & 15) * 24, Math.floor(id / 16) * 24, 24, 24, (x - constants.x) * 24, (y - constants.y) * 24, 24, 24)
+    gameCtx.drawImage(image, (id & 15) * 25, Math.floor(id / 16) * 25, 24, 24, (x - constants.x) * 24, (y - constants.y) * 24, 24, 24)
 }
 
 function drawMiniMap(id, x, y) {
@@ -133,39 +146,57 @@ function drawMiniMap(id, x, y) {
 }
 
 function placeBlocks() {
-  if (!constants.keyboard.has("mouse")) return
-  const x = Math.floor(constants.keyboard.get("mouse").X / 24 + constants.x)
-  const y = Math.floor(constants.keyboard.get("mouse").Y / 24 + constants.y)
-  if (x >= constants.width || y >= constants.height) return
-  if (x < 0 || y < 0) return
-  const key = `${x},${y}`
-  const layer = findBlock(constants.currentId)
+  if (!ck("has", "mouse")) return
+  if (ck("get", "oldMouse") === undefined)
+    ck("set", "oldMouse", ck("get", "mouse"))
+  const oldX = Math.floor(ck("get", "oldMouse").X / 24 + constants.x)
+  const oldY = Math.floor(ck("get", "oldMouse").Y / 24 + constants.y)
+  const newX = Math.floor(ck("get", "mouse").X / 24 + constants.x)
+  const newY = Math.floor(ck("get", "mouse").Y / 24 + constants.y)
+  if (newX >= constants.width || newY >= constants.height) return
+  if (newX < 0 || newY < 0) return
+  const distance2 = ((ck("get", "oldMouse").X - ck("get", "mouse").X) ** 2 +
+    (ck("get", "oldMouse").Y - ck("get", "mouse").Y) ** 2) ** (1 / 2)
+  const dist = "XY".split("").map(letter => "oldMouse,mouse".split(",").map(pos => ck("get", pos)[letter])
+    .reduce((a, b) => (a - b) ** 2)).reduce((a, b) => (a + b) ** (1 / 2))
+  console.log(dist / 24)
+  const distance = ((oldX - newX) ** 2 + (oldY - newY) ** 2) ** (1 / 2)
+  const angle = Math.atan2(oldY - newY, oldX - newX)
+  console.log(distance, distance2 / 24, angle / Math.PI * 180)
+  const key = `${newX},${newY}`
+  const layer = findBlock(constants.currentId)[0]
   constants.blocks[layer].set(key, constants.currentId)
-  if (constants.keyboard.has(16)) {
+  if (ck("has", 16)) {
     if (constants.blocks[1].has(key)) constants.blocks[1].delete(key)
     else if (constants.blocks[0].has(key)) constants.blocks[0].delete(key)
   }
 }
 
+function ck(mode, key, value = "") {
+  return constants.keyboard[mode](key, value)
+}
+
 function mouseMove(e) {
   e.preventDefault();
   if (!e.composedPath().includes(gameCanvas)) return
-  constants.keyboard.set("mouse", { X: e.clientX, Y: e.clientY });
+  ck("set", "oldMouse", ck("get", "mouse"))
+  ck("set", "mouse", { X: e.clientX, Y: e.clientY });
 }
 
 window.addEventListener("mousedown", mouseMove)
 window.addEventListener("mousemove", e => {
-  if (!constants.keyboard.has("mouse")) return
+  if (!ck("has", "mouse")) return
   mouseMove(e)
 })
 window.addEventListener("keydown", e => {
-  constants.keyboard.set(e.keyCode, true)
+  if (e.keyCode == 66) bottom.classList.toggle("min")
+  ck("set", e.keyCode, true)
 })
 
 window.addEventListener("keyup", e => {
-  constants.keyboard.delete(e.keyCode)
+  ck("delete", e.keyCode)
 })
 
 window.addEventListener("mouseup", e => {
-  constants.keyboard.delete("mouse");
+  ck("delete", "mouse")
 })

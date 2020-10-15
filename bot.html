@@ -29,16 +29,74 @@
       position: absolute;
       width: calc(var(--width) * 2px);
       height: calc(var(--height) * 2px);
-      top: 1vh;
+      top: calc(1vh + 50px);
       left: 1vw;
     }
+
+    .ui {
+      position: absolute;
+      width: 100vw;
+      background-color: var(--minimap);
+    }
+
+    .ui.top {
+      top: 0px;
+      height: 50px;
+      border-bottom: solid black 1px;
+    }
+
+    .ui.bottom {
+      display: grid;
+      grid-template-columns: 1fr 15fr;
+      height: 200px;
+      bottom: 0px;
+      border-top: solid black 1px;
+      transition-timing-function: cubic-bezier(0.445, 0.05, 0.55, 0.95);
+      transition-duration: 1s;
+      overflow: hidden;
+    }
+
+    .ui.bottom>div {
+      display: grid;
+      grid-template-rows: 1fr 1fr 1fr;
+      overflow: hidden;
+    }
+
+    .ui.bottom>div:nth-child(1)>* {
+      background-color: rgb(119, 119, 119);
+      border: none;
+      color: rgb(85, 85, 85);
+    }
+
+    .ui.bottom>div:nth-child(1)>.selected {
+      background-color: var(--minimap);
+      color: rgb(128, 128, 128);
+    }
+
+    .ui.bottom>div:nth-child(1)>*:hover {
+      color: rgb(128, 128, 128);
+    }
+
+    .ui.min {
+      height: 0px;
+    }
   </style>
+  <script src="https://kit.fontawesome.com/176978a92b.js" crossorigin="anonymous"></script>
   <script src="EEUbot.js" defer type="module"></script>
 </head>
 
 <body oncontextmenu="return!1">
   <canvas id="gameDraw"></canvas>
   <canvas id="minimap"></canvas>
+  <div id="topUi" class="ui top"></div>
+  <div id="bottomUi" class="ui bottom">
+    <div>
+      <button><em class="fas fa-cube fa-3x"></em></button>
+      <button><em class="fas fa-bolt fa-3x"></em></button>
+      <button><em class="fas fa-image fa-3x"></em></button>
+    </div>
+    <div></div>
+  </div>
 </body>
 
 </html>
