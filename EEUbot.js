@@ -202,6 +202,6 @@ window.addEventListener("mouseup", e => {
 })
 
 window.addEventListener("message", e => {
-  if (e.origin !== "https://ee-universe.com") return
   console.log(e)
+  if (e.origin !== "https://ee-universe.com") return
 })
