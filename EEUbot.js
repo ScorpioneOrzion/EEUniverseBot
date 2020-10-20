@@ -200,3 +200,7 @@ window.addEventListener("keyup", e => {
 window.addEventListener("mouseup", e => {
   ck("delete", "mouse")
 })
+
+window.addEventListener("message", e => {
+  console.log(e)
+})
