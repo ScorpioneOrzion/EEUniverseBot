@@ -202,7 +202,7 @@ window.addEventListener("mouseup", e => {
 })
 
 window.addEventListener("message", event => {
-  if (event.origin !== "https://ee-universe.com/game/index.html") return
+  if (event.origin !== "https://ee-universe.com/game/index.html" && event.origin !== "https://ee-universe.com") return
   const value = JSON.parse(event.data)
   if (value[1]) {
     if (value[0] == 66) bottom.classList.toggle("min")
