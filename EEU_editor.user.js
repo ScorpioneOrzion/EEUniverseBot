@@ -58,11 +58,11 @@
       })
 
       document.addEventListener("keydown", e => {
-        editor.contentWindow.postMessage(JSON.stringify([e.keyCode, true]), editor.src)
+        if (editor.style.display == "block") editor.contentWindow.postMessage(JSON.stringify([e.keyCode, true]), editor.src)
       })
 
       document.addEventListener("keyup", e => {
-        editor.contentWindow.postMessage(JSON.stringify([e.keyCode, false]), editor.src)
+        if (editor.style.display == "block") editor.contentWindow.postMessage(JSON.stringify([e.keyCode, false]), editor.src)
       })
       break;
   }
