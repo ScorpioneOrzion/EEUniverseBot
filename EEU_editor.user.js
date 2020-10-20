@@ -56,6 +56,7 @@
         window.addEventListener("keyup", e => {
           keyboard.delete(e.keyCode)
           editor.contentWindow.postMessage(keyboard, editor.src)
+          console.log(1)
         })
         editor.contentWindow.postMessage(token, editor.src)
       }
