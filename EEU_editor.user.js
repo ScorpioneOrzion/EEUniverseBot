@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EEU editor
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  Editor in EEU
 // @author       ScorpioneOrzion
 // @match        https://ee-universe.com/*
@@ -14,7 +14,6 @@
   'use strict';
   switch (window.location.href) {
     case "https://ee-universe.com/":
-      var keyboard = new Map()
       var token = document.cookie.split("; ").filter(a => a.includes("token="))[0];
       var editor = document.createElement("iframe");
       var game = document.querySelector("#game-aspect > iframe:nth-child(1)")
@@ -48,16 +47,15 @@
       items.appendChild(editorButton);
       document.body.appendChild(items);
       document.querySelector("#game-aspect > iframe").parentElement.appendChild(editor);
+      var valid = false;
+      window.addEventListener("keydown", e => {
+        if (valid) editor.contentWindow.postMessage(JSON.stringify([e.keyCode, true]), editor.src)
+      })
+      window.addEventListener("keyup", e => {
+        if (valid) editor.contentWindow.postMessage(JSON.stringify([e.keyCode, false]), editor.src)
+      })
       window.onload = () => {
-        window.addEventListener("keydown", e => {
-          keyboard.set(e.keyCode, true)
-          editor.contentWindow.postMessage(keyboard, editor.src)
-        })
-        window.addEventListener("keyup", e => {
-          keyboard.delete(e.keyCode)
-          editor.contentWindow.postMessage(keyboard, editor.src)
-          console.log(1)
-        })
+        valid = true
         editor.contentWindow.postMessage(token, editor.src)
       }
       break;
