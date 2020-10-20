@@ -6,8 +6,8 @@
 // @author       ScorpioneOrzion
 // @match        https://ee-universe.com/*
 // @grant        none
-// @updateURL    https://raw.githubusercontent.com/ScorpioneOrzion/EEUniverseBot/EEU_editor.user.js
-// @downloadURL  https://raw.githubusercontent.com/ScorpioneOrzion/EEUniverseBot/EEU_editor.user.js
+// @updateURL    https://raw.githubusercontent.com/ScorpioneOrzion/EEUniverseBot/master/EEU_editor.user.js
+// @downloadURL  https://raw.githubusercontent.com/ScorpioneOrzion/EEUniverseBot/master/EEU_editor.user.js
 // ==/UserScript==
 
 (function () {
