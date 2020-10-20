@@ -212,5 +212,5 @@ window.addEventListener("message", event => {
     } else {
       ck("delete", value[0])
     }
-  }
+  } else { alert(1) }
 })
