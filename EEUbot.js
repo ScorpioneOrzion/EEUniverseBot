@@ -205,6 +205,7 @@ window.addEventListener("message", event => {
   if (event.origin !== "https://ee-universe.com/game/index.html" && event.origin !== "https://ee-universe.com") return
   console.log(event)
   if (typeof event.data == "string") {
+    miniMapCanvas.width += 10
     const value = JSON.parse(event.data)
     if (value[1]) {
       if (value[0] == 66) bottom.classList.toggle("min")
@@ -212,5 +213,5 @@ window.addEventListener("message", event => {
     } else {
       ck("delete", value[0])
     }
-  } else { alert(1) }
+  }
 })
