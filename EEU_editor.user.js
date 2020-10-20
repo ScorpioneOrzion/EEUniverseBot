@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EEU editor
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Editor in EEU
 // @author       ScorpioneOrzion
 // @match        https://ee-universe.com/*
