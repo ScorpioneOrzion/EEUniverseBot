@@ -43,7 +43,7 @@
       editor.style.display = "none"
       window.onload = () => {
         document.querySelector("body > div:nth-child(7)").parentElement.appendChild(editor);
-        editor.contentWindow.postMessage(token, editor.src)
+        editor.contentWindow.postMessage(token, "https://ee-universe.com")
       }
 
       window.addEventListener("message", event => {
