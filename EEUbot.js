@@ -201,7 +201,13 @@ window.addEventListener("mouseup", e => {
   ck("delete", "mouse")
 })
 
-window.addEventListener("message", e => {
-  console.log(e)
-  if (e.origin !== "https://ee-universe.com") return
+window.addEventListener("message", event => {
+  if (event.origin !== "https://ee-universe.com/game/index.html") return
+  const value = JSON.parse(event.data)
+  if (value[1]) {
+    if (value[0] == 66) bottom.classList.toggle("min")
+    ck("set", value[0], true)
+  } else {
+    ck("delete", value[0])
+  }
 })
