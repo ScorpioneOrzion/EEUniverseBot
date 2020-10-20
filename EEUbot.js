@@ -202,7 +202,8 @@ window.addEventListener("mouseup", e => {
 })
 
 window.addEventListener("message", event => {
-  if (event.origin !== "https://ee-universe.com/game/index.html" && event.origin !== "https://ee-universe.com") return
+  var origin = event.origin || event.originalEvent.origin;
+  if (origin !== "https://ee-universe.com/game/index.html" && origin !== "https://ee-universe.com") return
   if (typeof event.data == "string") {
     if (event.data.indexOf('token') == 0) {
       top.innerHTML = event.data

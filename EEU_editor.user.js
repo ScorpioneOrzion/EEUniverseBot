@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EEU editor
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      0.6
 // @description  Editor in EEU
 // @author       ScorpioneOrzion
 // @match        https://ee-universe.com/*
@@ -47,7 +47,8 @@
       }
 
       window.addEventListener("message", event => {
-        if (event.origin !== "https://ee-universe.com") return
+        var origin = event.origin || event.originalEvent.origin;
+        if (origin !== "https://ee-universe.com") return
         if (event.data == "block") {
           document.querySelector("body > div:nth-child(7)").style.display = "block"
           editor.style.display = "none"
