@@ -50,6 +50,7 @@ const miniMapCanvas = document.querySelector("body > canvas:nth-child(2)")
 const miniMapCtx = miniMapCanvas.getContext("2d");
 
 let lastTime = 0;
+let token;
 
 function main(currentTime) {
   requestAnimationFrame(main)
@@ -194,12 +195,15 @@ window.addEventListener("message", event => {
     console.log(event.data)
     if (event.data.includes("token")) {
       console.log("token received")
-    }
-    const value = JSON.parse(event.data)
-    if (value[1]) {
-      ck("set", value[0], true)
+      token = event.data.split("token=")[1];
+      console.log(token)
     } else {
-      ck("delete", value[0])
+      const value = JSON.parse(event.data)
+      if (value[1]) {
+        ck("set", value[0], true)
+      } else {
+        ck("delete", value[0])
+      }
     }
   }
 })
