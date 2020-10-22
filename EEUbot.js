@@ -1,6 +1,8 @@
 import { mapColor } from './mapcolor.js'
 import { args } from './arguments.js'
 
+import * as EEUniverse from './EEUniverse.js'
+
 const top = document.querySelector('#topUi')
 const bottom = document.querySelector('#bottomUi')
 
@@ -26,7 +28,8 @@ const constants = {
   height: 50,
   blocks: [new Map(), new Map()],
   currentId: 10,
-  keyboard: new Map()
+  keyboard: new Map(),
+  clearBlocks: function () { this.blocks.forEach(map => map.clear()) }
 }
 
 window.constants = constants
@@ -175,14 +178,6 @@ window.addEventListener("mousemove", e => {
   if (!ck("has", "mouse")) return
   mouseMove(e)
 })
-window.addEventListener("keydown", e => {
-  if (e.keyCode == 66) bottom.classList.toggle("min")
-  ck("set", e.keyCode, true)
-})
-
-window.addEventListener("keyup", e => {
-  ck("delete", e.keyCode)
-})
 
 window.addEventListener("mouseup", e => {
   ck("delete", "mouse")
@@ -194,13 +189,56 @@ window.addEventListener("message", event => {
   if (typeof event.data == "string") {
     if (event.data.includes("token")) {
       token = event.data.split("token=")[1];
+      connect(token).then(() => { console.log("Bot connected"); });
     } else {
-      const value = JSON.parse(event.data)
+      const value = JSON.parse(event.data);
       if (value[1]) {
-        ck("set", value[0], true)
+        ck("set", value[0], true);
       } else {
-        ck("delete", value[0])
+        ck("delete", value[0]);
       }
     }
   }
 })
+
+async function connect(authToken) {
+  const connection = await EEUniverse.connect(authToken);
+
+  connection.onMessage(msg => {
+    switch (msg.scope) {
+      case EEUniverse.ConnectionScope.World:
+        switch (msg.type) {
+          case EEUniverse.MessageType.Init:
+            BlockHandeler(msg)
+            break;
+
+          default:
+            break;
+        }
+        break;
+    }
+  })
+}
+
+function BlockHandeler(initMessage) {
+  constants.clearBlocks()
+  constants.width = initMessage.get(9)
+  constants.height = initMessage.get(10)
+  let index = 0;
+  for (let y = 0; y < constants.height; y++) {
+    for (let x = 0; x < constants.height; x++) {
+      let blocks = initMessage.get(11 + index);
+      let foreground = EEUniverse.getFgId(blocks);
+      let background = EEUniverse.getBgId(blocks);
+      let argumentList = [];
+      index++
+      let maxArguments = Math.max(args.get(foreground), args.get(background))
+      for (let i = 0; i < maxArguments; i++) {
+        argumentList.push(initMessage.get(11 + index));
+        index++
+      }
+      constants.blocks[0].set(`${x},${y}`, background)
+      constants.blocks[1].set(`${x},${y}`, foreground)
+    }
+  }
+}
