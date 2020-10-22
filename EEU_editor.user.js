@@ -49,6 +49,7 @@
       window.addEventListener("message", event => {
         var origin = event.origin || event.originalEvent.origin;
         if (origin !== "https://ee-universe.com") return
+        console.log(event.data)
         if (event.data == "block") {
           document.querySelector("body > div:nth-child(7)").style.display = "block"
           editor.style.display = "none"
