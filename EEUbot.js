@@ -193,9 +193,7 @@ window.addEventListener("message", event => {
   if (origin !== "https://ee-universe.com/game/index.html" && origin !== "https://ee-universe.com") return
   if (typeof event.data == "string") {
     if (event.data.includes("token")) {
-      console.log("token received")
       token = event.data.split("token=")[1];
-      console.log(token)
     } else {
       const value = JSON.parse(event.data)
       if (value[1]) {

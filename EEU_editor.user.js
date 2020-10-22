@@ -57,7 +57,6 @@
           editor.style.display = "block"
         } else if (typeof event.data == "string" && event.data.includes("token")) {
           editor.contentWindow.postMessage(event.data, editor.src)
-          console.log("token", event.data)
         }
       })
 
