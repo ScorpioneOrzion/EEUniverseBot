@@ -190,8 +190,8 @@ window.addEventListener("mouseup", e => {
 
 window.addEventListener("message", event => {
   var origin = event.origin || event.originalEvent.origin;
+  console.log(event)
   if (origin !== "https://ee-universe.com/game/index.html" && origin !== "https://ee-universe.com") return
-  console.log(event.data)
   if (typeof event.data == "string") {
     const value = JSON.parse(event.data)
     if (value[1]) {
