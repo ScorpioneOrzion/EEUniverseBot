@@ -1,6 +1,5 @@
 import { mapColor } from './mapcolor.js'
 import { args } from './arguments.js'
-console.log(mapColor, args)
 
 const top = document.querySelector('#topUi')
 const bottom = document.querySelector('#bottomUi')
@@ -190,10 +189,11 @@ window.addEventListener("mouseup", e => {
 
 window.addEventListener("message", event => {
   var origin = event.origin || event.originalEvent.origin;
-  console.log(event.data)
   if (origin !== "https://ee-universe.com/game/index.html" && origin !== "https://ee-universe.com") return
   if (typeof event.data == "string") {
-    if (event.data.includes("token")) console.log("token received")
+    if (event.data.includes("token")) {
+      console.log("token received")
+    }
     const value = JSON.parse(event.data)
     if (value[1]) {
       ck("set", value[0], true)
