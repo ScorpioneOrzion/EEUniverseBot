@@ -1,4 +1,4 @@
-let wsp;
+let server;
 
 export const exp = {};
 const connection0 = {};
@@ -303,42 +303,50 @@ function send(messageType) {
   }
   const m = new Message(ConnectionScope.World, messageType, ...data);
 
-  wsp.send(en.serialize(m));
+  server.send(en.serialize(m));
 }
+
 function sendLobby(messageType) {
   const data = [];
   for (let i = 1; i < arguments.length; i++) {
     data[i - 1] = arguments[i];
   }
   const m = new Message(ConnectionScope.Lobby, messageType, ...data);
-  wsp.send(en.serialize(m));
+  server.send(en.serialize(m));
 }
 
 function onMessage(func) {
-  wsp.onMessage.addListener(message => {
+  console.log(server)
+  server.onmessage = function (message) {
     const m = en.deserialize(Buffer.from(message));
     func(m);
-  });
+  };
 }
 
 async function disconnect() {
-  await wsp.close();
+  await server.close();
 }
 
-async function connect(auth) {
-  wsp = await fetch("wss://game.ee-universe.com/?a=" + auth);
-
-  connectionO.send = send;
-  connectionO.sendLobby = sendLobby;
-  connectionO.joinRoom = joinRoom;
-  connectionO.onMessage = onMessage;
-  connectionO.disconnect = disconnect;
-  return connectionO;
+function connect(auth) {
+  return new Promise(function (resolve, reject) {
+    server = new WebSocket("wss://game.ee-universe.com/?a=" + auth);
+    server.onopen = function () {
+      connection0.send = send;
+      connection0.sendLobby = sendLobby;
+      connection0.joinRoom = joinRoom;
+      connection0.onMessage = onMessage;
+      connection0.disconnect = disconnect;
+      resolve(connection0);
+    };
+    server.onerror = function (err) {
+      reject(err);
+    };
+  });
 }
 
 function joinRoom(roomId) {
   const m = new Message(ConnectionScope.Lobby, MessageType.RoomConnect, "world", roomId);
-  wsp.send(en.serialize(m));
+  server.send(en.serialize(m));
 }
 
 exp.ConnectionScope = ConnectionScope;

@@ -1,7 +1,7 @@
 import { mapColor } from './mapcolor.js'
 import { args } from './arguments.js'
 
-import * as EEUniverse from './EEUniverse.js'
+import { exp as EEUniverse } from './EEUniverse.js'
 
 const top = document.querySelector('#topUi')
 const bottom = document.querySelector('#bottomUi')
@@ -54,6 +54,7 @@ const miniMapCtx = miniMapCanvas.getContext("2d");
 
 let lastTime = 0;
 let token;
+let connectionServer;
 
 function main(currentTime) {
   requestAnimationFrame(main)
@@ -189,7 +190,9 @@ window.addEventListener("message", event => {
   if (typeof event.data == "string") {
     if (event.data.includes("token")) {
       token = event.data.split("token=")[1];
-      connect(token).then(() => { console.log("Bot connected"); });
+      (async function () {
+        connectionServer = await connect(token)
+      })()
     } else {
       const value = JSON.parse(event.data);
       if (value[1]) {
@@ -200,24 +203,29 @@ window.addEventListener("message", event => {
     }
   }
 })
-
+window.connect = connect
 async function connect(authToken) {
-  const connection = await EEUniverse.connect(authToken);
-
-  connection.onMessage(msg => {
-    switch (msg.scope) {
-      case EEUniverse.ConnectionScope.World:
-        switch (msg.type) {
-          case EEUniverse.MessageType.Init:
-            BlockHandeler(msg)
-            break;
-
-          default:
-            break;
-        }
-        break;
-    }
-  })
+  let server;
+  await EEUniverse.connect(authToken).then(function (connection) {
+    connection.onMessage(msg => {
+      switch (msg.scope) {
+        case EEUniverse.ConnectionScope.World: //world scope
+          switch (msg.type) {
+            case EEUniverse.MessageType.Init: //init message
+              // do stuff with init
+              BlockHandeler(msg)
+              break;
+          }
+          break;
+      }
+    });
+    server = connection
+  }).then(() => {
+    console.log("Bot connected");
+  }).catch(function (err) {
+    console.log(err);
+  });
+  return server;
 }
 
 function BlockHandeler(initMessage) {
