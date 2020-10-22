@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EEU editor
 // @namespace    http://tampermonkey.net/
-// @version      0.6
+// @version      0.7
 // @description  Editor in EEU
 // @author       ScorpioneOrzion
 // @match        https://ee-universe.com/*
@@ -14,6 +14,7 @@
   'use strict';
   switch (window.location.href) {
     case "https://ee-universe.com/":
+      var token = document.cookie.split("; ").filter(a => a.includes("token="))[0];
       var game = document.querySelector("#game-aspect > iframe:nth-child(1)");
       var items = document.createElement("div");
       var gameButton = document.createElement("button");
@@ -32,18 +33,17 @@
       items.appendChild(gameButton);
       items.appendChild(editorButton);
       document.body.appendChild(items);
-
+      window.onload = () => {
+        game.contentWindow.postMessage(token, game.src)
+      }
       break;
     case "https://ee-universe.com/game/index.html":
-
-      var token = document.cookie.split("; ").filter(a => a.includes("token="))[0];
       var editor = document.createElement("iframe");
       editor.src = "https://scorpioneorzion.github.io/EEUniverseBot/bot.html";
       editor.style = "width: 100vw; height: 100vh;"
       editor.style.display = "none"
       window.onload = () => {
         document.querySelector("body > div:nth-child(7)").parentElement.appendChild(editor);
-        editor.contentWindow.postMessage(token, "https://ee-universe.com")
       }
 
       window.addEventListener("message", event => {
@@ -55,6 +55,9 @@
         } else if (event.data == "none") {
           document.querySelector("body > div:nth-child(7)").style.display = "none"
           editor.style.display = "block"
+        } else if (typeof event.data == "string" && event.data.includes("token")) {
+          editor.contentWindow.postMessage(event.data, editor.src)
+          console.log("token", event.data)
         }
       })
 
