@@ -147,23 +147,11 @@ function drawMiniMap(id, x, y) {
 
 function placeBlocks() {
   if (!ck("has", "mouse")) return
-  if (ck("get", "oldMouse") === undefined)
-    ck("set", "oldMouse", ck("get", "mouse"))
-  const oldX = Math.floor(ck("get", "oldMouse").X / 24 + constants.x)
-  const oldY = Math.floor(ck("get", "oldMouse").Y / 24 + constants.y)
-  const newX = Math.floor(ck("get", "mouse").X / 24 + constants.x)
-  const newY = Math.floor(ck("get", "mouse").Y / 24 + constants.y)
-  if (newX >= constants.width || newY >= constants.height) return
-  if (newX < 0 || newY < 0) return
-  const distance2 = ((ck("get", "oldMouse").X - ck("get", "mouse").X) ** 2 +
-    (ck("get", "oldMouse").Y - ck("get", "mouse").Y) ** 2) ** (1 / 2)
-  const dist = "XY".split("").map(letter => "oldMouse,mouse".split(",").map(pos => ck("get", pos)[letter])
-    .reduce((a, b) => (a - b) ** 2)).reduce((a, b) => (a + b) ** (1 / 2))
-  console.log(dist / 24)
-  const distance = ((oldX - newX) ** 2 + (oldY - newY) ** 2) ** (1 / 2)
-  const angle = Math.atan2(oldY - newY, oldX - newX)
-  console.log(distance, distance2 / 24, angle / Math.PI * 180)
-  const key = `${newX},${newY}`
+  const x = Math.floor(ck("get", "mouse").X / 24 + constants.x)
+  const y = Math.floor(ck("get", "mouse").Y / 24 + constants.y)
+  if (x >= constants.width || y >= constants.height) return
+  if (x < 0 || y < 0) return
+  const key = `${x},${y}`
   const layer = findBlock(constants.currentId)[0]
   constants.blocks[layer].set(key, constants.currentId)
   if (ck("has", 16)) {
@@ -179,7 +167,6 @@ function ck(mode, key, value = "") {
 function mouseMove(e) {
   e.preventDefault();
   if (!e.composedPath().includes(gameCanvas)) return
-  ck("set", "oldMouse", ck("get", "mouse"))
   ck("set", "mouse", { X: e.clientX, Y: e.clientY });
 }
 
