@@ -9,6 +9,7 @@ const bottom = document.querySelector('#bottomUi')
 const roomId = document.getElementById("roomId");
 const roomConnect = document.getElementById("roomIdConnect")
 const writeConnect = document.getElementById("writeData")
+const changeRoom = document.getElementById("changeroom")
 
 document.querySelectorAll('.ui.bottom>div:nth-child(1)>button').forEach(element => {
   element.onclick = () => {
@@ -219,7 +220,6 @@ window.addEventListener("message", event => {
 })
 
 roomConnect.onclick = () => {
-  console.log(connectionServer, roomId.value)
   if (connectionServer !== undefined) {
     place = false;
     connectionServer.joinRoom(roomId.value);
@@ -228,12 +228,15 @@ roomConnect.onclick = () => {
 }
 
 writeConnect.onclick = () => {
-  console.log(connectionServer, roomId.value)
   if (connectionServer !== undefined) {
     place = true;
     connectionServer.joinRoom(roomId.value);
     connectionServer.send(EEUniverse.MessageType.Init, 0);
   }
+}
+
+changeRoom.onclick = () => {
+  roomId.value = prompt("Enter roomId", roomId.value)
 }
 
 async function connect(authToken) {
@@ -294,8 +297,6 @@ function BlockHandeler(initMessage) { //false = 0
       }
     }
   }
-  console.log(constants.blocks[0])
-  console.log(constants.blocks[1])
 }
 
 function CheckDifference(initMessage) {
@@ -316,14 +317,25 @@ function CheckDifference(initMessage) {
       }
       const bg = new Block(background);
       const fg = new Block(foreground, ...argumentList);
-      if (!bg.equals(constants.blocks[0].get(`${x},${y}`))) {
+
+      if (bg.id !== 0) {
+        if (constants.blocks[0].get(`${x},${y}`) === undefined) {
+          bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
+        } else if (!bg.equals(constants.blocks[0].get(`${x},${y}`))) {
+          bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
+        }
+      } else if (constants.blocks[0].get(`${x},${y}`) !== undefined) {
         bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
       }
-      if (!fg.equals(constants.blocks[1].get(`${x},${y}`))) {
-        bot.send(EEUniverse.MessageType.PlaceBlock, 1, x, y, fg.id, ...fg.args);
+      if (fg.id !== 0) {
+        if (constants.blocks[1].get(`${x},${y}`) === undefined) {
+          bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
+        } else if (!bg.equals(constants.blocks[1].get(`${x},${y}`))) {
+          bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
+        }
+      } else if (constants.blocks[1].get(`${x},${y}`) !== undefined) {
+        bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
       }
     }
   }
-  console.log(constants.blocks[0])
-  console.log(constants.blocks[1])
 }
