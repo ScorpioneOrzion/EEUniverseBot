@@ -219,19 +219,19 @@ window.addEventListener("message", event => {
 })
 
 roomConnect.onclick = () => {
-  console.log(connectionServer, roomId.innerText)
+  console.log(connectionServer, roomId.value)
   if (connectionServer !== undefined) {
     place = false;
-    connectionServer.joinRoom(roomId.innerText);
+    connectionServer.joinRoom(roomId.value);
     connectionServer.send(EEUniverse.MessageType.Init, 0);
   }
 }
 
 writeConnect.onclick = () => {
-  console.log(connectionServer, roomId.innerText)
+  console.log(connectionServer, roomId.value)
   if (connectionServer !== undefined) {
     place = true;
-    connectionServer.joinRoom(roomId.innerText);
+    connectionServer.joinRoom(roomId.value);
     connectionServer.send(EEUniverse.MessageType.Init, 0);
   }
 }
