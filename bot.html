@@ -14,6 +14,11 @@
       background-color: var(--backGround);
     }
 
+    * {
+      padding: 0;
+      margin: 0;
+    }
+
     body {
       width: 100vw;
       height: 100vh;
@@ -86,7 +91,14 @@
 <body oncontextmenu="return!1">
   <canvas id="gameDraw"></canvas>
   <canvas id="minimap"></canvas>
-  <div id="topUi" class="ui top"></div>
+  <div id="topUi" class="ui top">
+    <div style="display: flex;">
+      <textarea name="roomId" id="roomId" style="resize:none;" rows="1" cols="12" maxlength="12"
+        placeholder="roomId"></textarea>
+      <button style="height: 18px;" id="roomIdConnect">Load from room</button>
+      <button style="height: 18px;" id="writeData">Write to room</button>
+    </div>
+  </div>
   <div id="bottomUi" class="ui bottom">
     <div>
       <button><em class="fas fa-cube fa-2x"></em></button>

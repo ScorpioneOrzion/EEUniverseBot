@@ -6,6 +6,9 @@ import { exp as EEUniverse } from './EEUniverse.js'
 
 const top = document.querySelector('#topUi')
 const bottom = document.querySelector('#bottomUi')
+const roomId = document.getElementById("roomId");
+const roomConnect = document.getElementById("roomIdConnect")
+const writeConnect = document.getElementById("writeData")
 
 document.querySelectorAll('.ui.bottom>div:nth-child(1)>button').forEach(element => {
   element.onclick = () => {
@@ -56,6 +59,7 @@ const miniMapCtx = miniMapCanvas.getContext("2d");
 let lastTime = 0;
 let token;
 let connectionServer;
+let place = false;
 
 function main(currentTime) {
   requestAnimationFrame(main)
@@ -174,16 +178,20 @@ function mouseMove(e) {
   ck("set", "mouse", { X: e.clientX, Y: e.clientY });
 }
 
-window.addEventListener("mousedown", mouseMove)
+window.addEventListener("mousedown", e => {
+  if (e.composedPath().indexOf(top) == -1) mouseMove(e)
+})
 window.addEventListener("mousemove", e => {
   if (!ck("has", "mouse")) return
   mouseMove(e)
 })
 window.addEventListener("keydown", e => {
-  ck("set", e.keyCode, true)
+  if (e.composedPath().indexOf(top) == -1) {
+    ck("set", e.keyCode, true)
+  }
 })
 window.addEventListener("keyup", e => {
-  ck("delete", e.keyCode)
+  if (e.composedPath().indexOf(top) == -1) ck("delete", e.keyCode)
 })
 
 window.addEventListener("mouseup", e => {
@@ -209,7 +217,27 @@ window.addEventListener("message", event => {
     }
   }
 })
-window.connect = connect
+
+roomConnect.onclick = () => {
+  console.log(connectionServer)
+  if (connectionServer !== undefined) {
+    place = false;
+    connectionServer.joinRoom(roomId.innerText);
+    connectionServer.send(EEUniverse.MessageType.Init, 0);
+    console.log(true)
+  }
+}
+
+writeConnect.onclick = () => {
+  console.log(connectionServer)
+  if (connectionServer !== undefined) {
+    place = true;
+    connectionServer.joinRoom(roomId.innerText);
+    connectionServer.send(EEUniverse.MessageType.Init, 0);
+    console.log(true)
+  }
+}
+
 async function connect(authToken) {
   let server;
   await EEUniverse.connect(authToken).then(function (connection) {
@@ -219,11 +247,14 @@ async function connect(authToken) {
           switch (msg.type) {
             case EEUniverse.MessageType.Init: //init message
               // do stuff with init
-              connection.send(EEUniverse.MessageType.Chat, "Bot successfully connected."); //now to the most important part for EEU Editor
-              const ww = msg.get(9);
-              const wh = msg.get(10);
-
-              BlockHandeler(msg)
+              // connection.send(EEUniverse.MessageType.Chat, "Bot successfully connected."); //now to the most important part for EEU Editor
+              //leave world if loading world
+              if (place == false) {
+                BlockHandeler(msg)
+              } else {
+                CheckDifference(msg)
+              }
+              connection.leaveRoom()
               break;
           }
           break;
@@ -244,23 +275,57 @@ function BlockHandeler(initMessage) { //false = 0
   constants.height = initMessage.get(10)
   let index = 0;
   for (let y = 0; y < constants.height; y++) {
-    for (let x = 0; x < constants.height; x++) {
+    for (let x = 0; x < constants.width; x++) {
       let blocks = initMessage.get(11 + index);
       if (blocks === false) blocks = 0;
       let foreground = EEUniverse.getFgId(blocks);
       let background = EEUniverse.getBgId(blocks);
       let argumentList = [];// not yet used
       index++
-      let maxArguments = args.get(foreground).length //lol
+      let maxArguments = args.get(foreground).length
       for (let i = 0; i < maxArguments; i++) {
         argumentList.push(initMessage.get(11 + index++));
       }
       const bg = new Block(background) //this way both fgs and bgs can have arguments. for later implementation though
       const fg = new Block(foreground, ...argumentList);
-      constants.blocks[0].set(`${x},${y}`, bg)
-      constants.blocks[1].set(`${x},${y}`, fg)
+      if (bg.id !== 0) {
+        constants.blocks[0].set(`${x},${y}`, bg)
+      }
+      if (fg.id !== 0) {
+        constants.blocks[1].set(`${x},${y}`, fg)
+      }
     }
   }
-  console.log("bg", constants.blocks[0]);
-  console.log("fg", constants.blocks[1]);
+  console.log(constants.blocks[0])
+  console.log(constants.blocks[1])
+}
+
+function CheckDifference(initMessage) {
+  let width = initMessage.get(9)
+  let heigth = initMessage.get(10)
+  let index = 0
+  for (let y = 0; y < heigth; y++) {
+    for (let x = 0; x < width; x++) {
+      let blocks = initMessage.get(11 + index);
+      if (blocks === false) blocks = 0;
+      let foreground = EEUniverse.getFgId(blocks);
+      let background = EEUniverse.getBgId(blocks);
+      let argumentList = [];
+      index++
+      let maxArguments = args.get(foreground).length
+      for (let i = 0; i < maxArguments; i++) {
+        argumentList.push(initMessage.get(11 + index++));
+      }
+      const bg = new Block(background);
+      const fg = new Block(foreground, ...argumentList);
+      if (!bg.equals(constants.blocks[0].get(`${x},${y}`))) {
+        bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
+      }
+      if (!fg.equals(constants.blocks[1].get(`${x},${y}`))) {
+        bot.send(EEUniverse.MessageType.PlaceBlock, 1, x, y, fg.id, ...fg.args);
+      }
+    }
+  }
+  console.log(constants.blocks[0])
+  console.log(constants.blocks[1])
 }

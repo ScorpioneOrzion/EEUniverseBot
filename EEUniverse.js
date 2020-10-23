@@ -341,6 +341,7 @@ function connect(auth) {
       connection0.send = send;
       connection0.sendLobby = sendLobby;
       connection0.joinRoom = joinRoom;
+      connection0.leaveRoom = leaveRoom;
       connection0.onMessage = onMessage;
       connection0.disconnect = disconnect;
       resolve(connection0);
@@ -352,10 +353,11 @@ function connect(auth) {
 }
 
 function joinRoom(roomId) {
-  const m = new Message(ConnectionScope.Lobby, MessageType.RoomConnect, "world", roomId);
-  const buf = en.serialize(m);
-  const blob = new Blob([buf]);
-  server.send(blob);
+  sendLobby(MessageType.RoomConnect, "world", roomId);
+}
+
+function leaveRoom() {
+  sendLobby(MessageType.RoomDisconnect);
 }
 
 exp.ConnectionScope = ConnectionScope;
