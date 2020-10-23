@@ -329,12 +329,12 @@ function CheckDifference(initMessage) {
       }
       if (fg.id !== 0) {
         if (constants.blocks[1].get(`${x},${y}`) === undefined) {
-          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
+          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 1, x, y, fg.id, ...fg.args);
         } else if (!bg.equals(constants.blocks[1].get(`${x},${y}`))) {
-          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
+          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 1, x, y, fg.id, ...fg.args);
         }
       } else if (constants.blocks[1].get(`${x},${y}`) !== undefined) {
-        connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
+        connectionServer.send(EEUniverse.MessageType.PlaceBlock, 1, x, y, fg.id, ...fg.args);
       }
     }
   }
