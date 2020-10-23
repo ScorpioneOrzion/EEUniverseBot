@@ -219,7 +219,7 @@ window.addEventListener("message", event => {
 })
 
 roomConnect.onclick = () => {
-  console.log(connectionServer)
+  console.log(connectionServer, roomId.innerText)
   if (connectionServer !== undefined) {
     place = false;
     connectionServer.joinRoom(roomId.innerText);
@@ -228,7 +228,7 @@ roomConnect.onclick = () => {
 }
 
 writeConnect.onclick = () => {
-  console.log(connectionServer)
+  console.log(connectionServer, roomId.innerText)
   if (connectionServer !== undefined) {
     place = true;
     connectionServer.joinRoom(roomId.innerText);
