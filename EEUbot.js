@@ -320,21 +320,21 @@ function CheckDifference(initMessage) {
 
       if (bg.id !== 0) {
         if (constants.blocks[0].get(`${x},${y}`) === undefined) {
-          bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
+          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
         } else if (!bg.equals(constants.blocks[0].get(`${x},${y}`))) {
-          bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
+          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
         }
       } else if (constants.blocks[0].get(`${x},${y}`) !== undefined) {
-        bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
+        connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
       }
       if (fg.id !== 0) {
         if (constants.blocks[1].get(`${x},${y}`) === undefined) {
-          bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
+          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
         } else if (!bg.equals(constants.blocks[1].get(`${x},${y}`))) {
-          bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
+          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
         }
       } else if (constants.blocks[1].get(`${x},${y}`) !== undefined) {
-        bot.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
+        connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, fg.id, ...fg.args);
       }
     }
   }
