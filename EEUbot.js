@@ -224,7 +224,6 @@ roomConnect.onclick = () => {
     place = false;
     connectionServer.joinRoom(roomId.innerText);
     connectionServer.send(EEUniverse.MessageType.Init, 0);
-    console.log(true)
   }
 }
 
@@ -234,7 +233,6 @@ writeConnect.onclick = () => {
     place = true;
     connectionServer.joinRoom(roomId.innerText);
     connectionServer.send(EEUniverse.MessageType.Init, 0);
-    console.log(true)
   }
 }
 
