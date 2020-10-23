@@ -1,3 +1,5 @@
+import * as buffer from "./buffer.js";
+
 let server;
 
 export const exp = {};
@@ -316,7 +318,6 @@ function sendLobby(messageType) {
 }
 
 function onMessage(func) {
-  console.log(server)
   server.onmessage = function (message) {
     const m = en.deserialize(Buffer.from(message));
     func(m);
