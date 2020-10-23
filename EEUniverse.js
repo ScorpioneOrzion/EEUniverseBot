@@ -96,7 +96,7 @@ class Encoder {
         i++
       }
     }
-    var c = Buffer.from(new ArrayBuffer(i));
+    var c = buffer.Buffer.from(new ArrayBuffer(i));
     this.index = 0,
       c.writeUInt8(msg.scope, this.index++),
       this.write7BitEncodedInt(c, msg.type);
@@ -120,7 +120,7 @@ class Encoder {
         this.write(c, type, data)
     }
 
-    return Buffer.from(c);
+    return buffer.Buffer.from(c);
   }
 
   deserialize(t) {
@@ -304,8 +304,9 @@ function send(messageType) {
     data[i - 1] = arguments[i];
   }
   const m = new Message(ConnectionScope.World, messageType, ...data);
-
-  server.send(en.serialize(m));
+  const buf = en.serialize(m);
+  const blob = new Blob([buf]);
+  server.send(blob);
 }
 
 function sendLobby(messageType) {
@@ -314,13 +315,18 @@ function sendLobby(messageType) {
     data[i - 1] = arguments[i];
   }
   const m = new Message(ConnectionScope.Lobby, messageType, ...data);
-  server.send(en.serialize(m));
+  const buf = en.serialize(m);
+  const blob = new Blob([buf]);
+  server.send(blob);
 }
 
 function onMessage(func) {
-  server.onmessage = function (message) {
-    const m = en.deserialize(Buffer.from(message));
-    func(m);
+  server.onmessage = async function (message) {
+    const data = message.data;
+    const arrayBuffer = await data.arrayBuffer();
+    const buf = buffer.Buffer.from(arrayBuffer);
+    const msg = en.deserialize(buf);
+    func(msg);
   };
 }
 
@@ -347,7 +353,9 @@ function connect(auth) {
 
 function joinRoom(roomId) {
   const m = new Message(ConnectionScope.Lobby, MessageType.RoomConnect, "world", roomId);
-  server.send(en.serialize(m));
+  const buf = en.serialize(m);
+  const blob = new Blob([buf]);
+  server.send(blob);
 }
 
 exp.ConnectionScope = ConnectionScope;

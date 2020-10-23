@@ -1,5 +1,6 @@
 import { mapColor } from './mapcolor.js'
 import { args } from './arguments.js'
+import { Block } from './blocks.js'
 
 import { exp as EEUniverse } from './EEUniverse.js'
 
@@ -116,7 +117,6 @@ function drawBackground() {
     if ((i - constants.x) * 24 - 24 > gameCanvas.width) break;
     for (let j = 0; j < constants.height; j++) {
       if ((j - constants.y) * 24 - 24 > gameCanvas.height) break;
-      if ((i - constants.x) * 24 + 24 < 0) break;
       if (checkDraw((i - constants.x) * 24, (j - constants.y) * 24))
         gameCtx.drawImage(ground, (i - constants.x) * 24, (j - constants.y) * 24, 24, 24)
     }
@@ -124,14 +124,14 @@ function drawBackground() {
 }
 
 function drawBlocks() {
-  for (const [key, id] of constants.blocks[0]) {
-    drawBlock(id, ...key.split(","))
-    drawMiniMap(id, ...key.split(","))
+  for (const [key, value] of constants.blocks[0]) {
+    drawBlock(value.id, ...key.split(","))
+    drawMiniMap(value.id, ...key.split(","))
   }
 
-  for (const [key, id] of constants.blocks[1]) {
-    drawBlock(id, ...key.split(","))
-    drawMiniMap(id, ...key.split(","))
+  for (const [key, value] of constants.blocks[1]) {
+    drawBlock(value.id, ...key.split(","))
+    drawMiniMap(value.id, ...key.split(","))
   }
 }
 
@@ -157,7 +157,7 @@ function placeBlocks() {
   if (x < 0 || y < 0) return
   const key = `${x},${y}`
   const layer = findBlock(constants.currentId)[0]
-  constants.blocks[layer].set(key, constants.currentId)
+  constants.blocks[layer].set(key, new Block(constants.currentId))
   if (ck("has", 16)) {
     if (constants.blocks[1].has(key)) constants.blocks[1].delete(key)
     else if (constants.blocks[0].has(key)) constants.blocks[0].delete(key)
@@ -178,6 +178,12 @@ window.addEventListener("mousedown", mouseMove)
 window.addEventListener("mousemove", e => {
   if (!ck("has", "mouse")) return
   mouseMove(e)
+})
+window.addEventListener("keydown", e => {
+  ck("set", e.keyCode, true)
+})
+window.addEventListener("keyup", e => {
+  ck("delete", e.keyCode)
 })
 
 window.addEventListener("mouseup", e => {
@@ -213,6 +219,10 @@ async function connect(authToken) {
           switch (msg.type) {
             case EEUniverse.MessageType.Init: //init message
               // do stuff with init
+              connection.send(EEUniverse.MessageType.Chat, "Bot successfully connected."); //now to the most important part for EEU Editor
+              const ww = msg.get(9);
+              const wh = msg.get(10);
+
               BlockHandeler(msg)
               break;
           }
@@ -228,7 +238,7 @@ async function connect(authToken) {
   return server;
 }
 
-function BlockHandeler(initMessage) {
+function BlockHandeler(initMessage) { //false = 0
   constants.clearBlocks()
   constants.width = initMessage.get(9)
   constants.height = initMessage.get(10)
@@ -236,17 +246,21 @@ function BlockHandeler(initMessage) {
   for (let y = 0; y < constants.height; y++) {
     for (let x = 0; x < constants.height; x++) {
       let blocks = initMessage.get(11 + index);
+      if (blocks === false) blocks = 0;
       let foreground = EEUniverse.getFgId(blocks);
       let background = EEUniverse.getBgId(blocks);
-      let argumentList = [];
+      let argumentList = [];// not yet used
       index++
-      let maxArguments = Math.max(args.get(foreground), args.get(background))
+      let maxArguments = args.get(foreground).length //lol
       for (let i = 0; i < maxArguments; i++) {
-        argumentList.push(initMessage.get(11 + index));
-        index++
+        argumentList.push(initMessage.get(11 + index++));
       }
-      constants.blocks[0].set(`${x},${y}`, background)
-      constants.blocks[1].set(`${x},${y}`, foreground)
+      const bg = new Block(background) //this way both fgs and bgs can have arguments. for later implementation though
+      const fg = new Block(foreground, ...argumentList);
+      constants.blocks[0].set(`${x},${y}`, bg)
+      constants.blocks[1].set(`${x},${y}`, fg)
     }
   }
+  console.log("bg", constants.blocks[0]);
+  console.log("fg", constants.blocks[1]);
 }

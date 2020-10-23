@@ -20,7 +20,7 @@
       margin: 0;
       overflow: hidden;
       --backGround: #CCC;
-      --minimap: rgb(160, 160, 160);
+      --minimap: rgb(0, 0, 0);
     }
 
     #minimap {
@@ -36,7 +36,7 @@
     .ui {
       position: absolute;
       width: 100vw;
-      background-color: var(--minimap);
+      background-color: rgb(160, 160, 160);
     }
 
     .ui.top {
@@ -67,7 +67,7 @@
     }
 
     .ui.bottom>div:nth-child(1)>.selected {
-      background-color: var(--minimap);
+      background-color: rgb(160, 160, 160);
       color: rgb(128, 128, 128);
     }
 
@@ -80,7 +80,7 @@
     }
   </style>
   <script src="https://kit.fontawesome.com/176978a92b.js" crossorigin="anonymous"></script>
-  <script src="EEUbot.js" defer type="module"></script>
+  <script src="./EEUbot.js" defer type="module"></script>
 </head>
 
 <body oncontextmenu="return!1">
