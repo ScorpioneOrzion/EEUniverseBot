@@ -165,7 +165,7 @@ function placeBlocks() {
   constants.blocks[layer].set(key, new Block(constants.currentId))
   if (ck("has", 16)) {
     if (constants.blocks[1].has(key)) constants.blocks[1].delete(key)
-    else if (constants.blocks[0].has(key)) constants.blocks[0].delete(key)
+    if (constants.blocks[0].has(key)) constants.blocks[0].delete(key)
   }
 }
 
