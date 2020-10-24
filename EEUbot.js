@@ -255,6 +255,7 @@ async function connect(authToken) {
               } else {
                 CheckDifference(msg)
               }
+              connection.leaveRoom()
               break;
           }
           break;
@@ -296,7 +297,6 @@ function BlockHandeler(initMessage) { //false = 0
       }
     }
   }
-  connectionServer.leaveRoom()
 }
 
 function CheckDifference(initMessage) {
@@ -318,25 +318,18 @@ function CheckDifference(initMessage) {
       const bg = new Block(background);
       const fg = new Block(foreground, ...argumentList);
 
-      if (bg.id !== 0) {
-        if (constants.blocks[0].get(`${x},${y}`) === undefined) {
-          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
-        } else if (!bg.equals(constants.blocks[0].get(`${x},${y}`))) {
-          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
-        }
-      } else if (constants.blocks[0].get(`${x},${y}`) !== undefined) {
-        connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, bg.id, ...bg.args);
+      let newBg = constants.blocks[0].get(`${x},${y}`)
+      let newFg = constants.blocks[1].get(`${x},${y}`)
+
+      if (newBg === undefined) newBg = new Block(0)
+      if (newFg === undefined) newFg = new Block(0)
+
+      if (!bg.equals(newBg)) {
+        connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, newBg.id, ...newBg.args);
       }
-      if (fg.id !== 0) {
-        if (constants.blocks[1].get(`${x},${y}`) === undefined) {
-          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 1, x, y, fg.id, ...fg.args);
-        } else if (!fg.equals(constants.blocks[1].get(`${x},${y}`))) {
-          connectionServer.send(EEUniverse.MessageType.PlaceBlock, 1, x, y, fg.id, ...fg.args);
-        }
-      } else if (constants.blocks[1].get(`${x},${y}`) !== undefined) {
-        connectionServer.send(EEUniverse.MessageType.PlaceBlock, 1, x, y, fg.id, ...fg.args);
+      if (!fg.equals(newFg)) {
+        connectionServer.send(EEUniverse.MessageType.PlaceBlock, 1, x, y, newFg.id, ...newFg.args);
       }
     }
   }
-  connectionServer.leaveRoom()
 }
