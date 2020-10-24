@@ -255,7 +255,6 @@ async function connect(authToken) {
               } else {
                 CheckDifference(msg)
               }
-              connection.leaveRoom()
               break;
           }
           break;
@@ -297,6 +296,7 @@ function BlockHandeler(initMessage) { //false = 0
       }
     }
   }
+  connectionServer.leaveRoom()
 }
 
 function CheckDifference(initMessage) {
@@ -338,4 +338,5 @@ function CheckDifference(initMessage) {
       }
     }
   }
+  connectionServer.leaveRoom()
 }
