@@ -5,45 +5,41 @@ import { Block } from './blocks.js'
 import { exp as EEUniverse } from './EEUniverse.js'
 
 const top = document.querySelector('#topUi')
-const bottom = document.querySelector('#bottomUi')
 const roomId = document.getElementById("roomId");
 const roomConnect = document.getElementById("roomIdConnect")
 const writeConnect = document.getElementById("writeData")
 const changeRoom = document.getElementById("changeroom")
-
-document.querySelectorAll('.ui.bottom>div:nth-child(1)>button').forEach(element => {
-  element.onclick = () => {
-    document.querySelector('button.selected').classList.remove('selected')
-    element.classList.add('selected')
-  }
-})
-
-if (document.querySelector('button.selected') == null)
-  document.querySelector('.ui.bottom>div:nth-child(1)>button:nth-child(1)').classList.add('selected')
-
-const image = new Image()
-image.src = './AllBlocks.png'
-const ground = new Image()
-ground.src = './ground.png'
-
+const gameCanvas = document.querySelector("body > canvas:nth-child(1)")
+const gameCtx = gameCanvas.getContext("2d");
+const miniMapCanvas = document.querySelector("body > canvas:nth-child(2)")
+const miniMapCtx = miniMapCanvas.getContext("2d");
+const ui = document.getElementById('ui');
+const uiCtx = ui.getContext("2d")
 const constants = {
   x: 0,
   y: 0,
   width: 50,
   height: 50,
   blocks: [new Map(), new Map()],
+  clickAbles: [],
   currentId: 10,
   keyboard: new Map(),
   clearBlocks: function () { this.blocks.forEach(map => map.clear()) }
 }
 
-window.constants = constants
+ui.width = window.innerWidth - 50
+ui.height = 150
 
-function findBlock(id) {
-  if (blockLayers.bg.some(list => list[1] >= id && list[0] <= id)) return [0, 0];
-  if (blockLayers.fg.some(list => list[1] >= id && list[0] <= id)) return [1, 1];
-  if (blockLayers.ac.some(list => list[1] >= id && list[0] <= id)) return [1, 2];
-  return null;
+ui.onclick = event => {
+  let x = event.clientX - 50
+  let y = event.clientY - window.innerHeight + 150
+  for (const area of constants.clickAbles) {
+    if (area[0] <= x && (area[0] + 24) >= x && (area[1]) <= y && (area[1] + 24) >= y) {
+      constants.currentId = area[2]
+      drawUiFull(area[3])
+      break;
+    }
+  }
 }
 
 const blockLayers = {
@@ -52,10 +48,64 @@ const blockLayers = {
   "ac": [[0, 0], [11, 11], [13, 17], [44, 44], [55, 59], [70, 71], [92, 94], [97, 105]]
 }
 
-const gameCanvas = document.querySelector("body > canvas:nth-child(1)")
-const gameCtx = gameCanvas.getContext("2d");
-const miniMapCanvas = document.querySelector("body > canvas:nth-child(2)")
-const miniMapCtx = miniMapCanvas.getContext("2d");
+const image = new Image()
+image.src = './AllBlocks.png'
+const ground = new Image()
+ground.src = './ground.png'
+const areas = document.querySelectorAll('.ui.bottom>div:nth-child(1)>button')
+
+let i = 0
+areas.forEach(element => {
+  element.value = i++
+  element.onclick = () => {
+    document.querySelector('button.selected')?.classList.remove('selected')
+    element.classList.add('selected')
+    drawUiFull(element.value)
+  }
+})
+
+function drawUiFull(p) {
+  let j = 0
+  let k = 0
+  clearUi()
+  ui.width = window.innerWidth - 50
+  constants.clickAbles = []
+  while (findBlock(k) !== null) {
+    if (findBlock(k)[1] == p) {
+      if (constants.currentId == k) {
+        uiCtx.beginPath()
+        uiCtx.rect((24 + j) % (ui.width - 48) - 1, Math.floor((24 + j) / (ui.width - 48)) * 30 + 11, 26, 26)
+        uiCtx.stroke()
+      }
+      constants.clickAbles.push([(24 + j) % (ui.width - 48), Math.floor((24 + j) / (ui.width - 48)) * 30 + 12, k, p])
+      drawUi(k, (24 + j) % (ui.width - 48), Math.floor((24 + j) / (ui.width - 48)) * 30 + 12)
+      j += 25
+    }
+    k++
+  }
+}
+
+if (document.querySelector('button.selected') == null) {
+  document.querySelector('.ui.bottom>div:nth-child(1)>button:nth-child(1)').click()
+}
+
+window.constants = constants
+
+function findBlock(id) {
+  if (blockLayers.bg.some(list => list[1] >= id && list[0] <= id)) return [0, 2];
+  if (blockLayers.fg.some(list => list[1] >= id && list[0] <= id)) return [1, 0];
+  if (blockLayers.ac.some(list => list[1] >= id && list[0] <= id)) return [1, 1];
+  return null;
+}
+
+function clearUi() {
+  uiCtx.clearRect(0, 0, ui.width, ui.height)
+}
+
+function drawUi(id, x, y) {
+  uiCtx.drawImage(ground, x, y, 24, 24)
+  uiCtx.drawImage(image, (id & 15) * 25, Math.floor(id / 16) * 25, 24, 24, x, y, 24, 24)
+}
 
 let lastTime = 0;
 let token;
