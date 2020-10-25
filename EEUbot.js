@@ -143,6 +143,8 @@ function moveScreen() {
       constants.x += speed
     }
   }
+  constants.x = Math.max(-10, Math.min(constants.width - 15, constants.x))
+  constants.y = Math.max(-10, Math.min(constants.height - 15, constants.y))
 }
 
 function checkDraw(x, y) {
