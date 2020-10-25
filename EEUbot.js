@@ -22,7 +22,7 @@ const constants = {
   height: 50,
   blocks: [new Map(), new Map()],
   clickAbles: [],
-  currentId: 10,
+  currentId: 0,
   keyboard: new Map(),
   clearBlocks: function () { this.blocks.forEach(map => map.clear()) }
 }
@@ -144,7 +144,7 @@ function moveScreen() {
     }
   }
   constants.x = Math.max(-10, Math.min(constants.width - 15, constants.x))
-  constants.y = Math.max(-10, Math.min(constants.height - 15, constants.y))
+  constants.y = Math.max(-10, Math.min(constants.height - 5, constants.y))
 }
 
 function checkDraw(x, y) {
