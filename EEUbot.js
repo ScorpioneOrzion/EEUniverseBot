@@ -22,6 +22,7 @@ const constants = {
   height: 50,
   blocks: [new Map(), new Map()],
   clickAbles: [],
+  drawMode: "draw",
   currentId: 0,
   keyboard: new Map(),
   clearBlocks: function () { this.blocks.forEach(map => map.clear()) }
@@ -210,11 +211,85 @@ function placeBlocks() {
   if (x < 0 || y < 0) return
   const key = `${x},${y}`
   const layer = findBlock(constants.currentId)[0]
-  constants.blocks[layer].set(key, new Block(constants.currentId))
+
   if (ck("has", 16)) {
-    if (constants.blocks[1].has(key)) constants.blocks[1].delete(key)
-    if (constants.blocks[0].has(key)) constants.blocks[0].delete(key)
+    switch (constants.drawMode) {
+      case "draw":
+        if (constants.blocks[1].has(key)) constants.blocks[1].delete(key)
+        if (constants.blocks[0].has(key)) constants.blocks[0].delete(key)
+        break;
+
+      case "fill":
+        let bg = constants.blocks[0].get(key)
+        let fg = constants.blocks[1].get(key)
+
+        if (bg === undefined) bg = new Block(0)
+        if (fg === undefined) fg = new Block(0)
+
+        fill(x, y, bg, fg, null)
+        break;
+    }
+  } else {
+    switch (constants.drawMode) {
+      case "draw":
+        constants.blocks[layer].set(key, new Block(constants.currentId))
+        break;
+      case "fill":
+        let bg = constants.blocks[0].get(key)
+        let fg = constants.blocks[1].get(key)
+
+        if (bg === undefined) bg = new Block(0)
+        if (fg === undefined) fg = new Block(0)
+
+        fill(x, y, bg, fg, new Block(constants.currentId))
+        break;
+    }
   }
+}
+
+function fill(x, y, bg, fg, newBlock) {
+  const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]]
+
+  if (newBlock instanceof Block) {
+    const layer = findBlock(newBlock.id)[0]
+    if (newBlock.id === 0)
+      constants.blocks[layer].delete(`${x},${y}`)
+    else
+      constants.blocks[layer].set(`${x},${y}`, newBlock)
+    for (const direction of directions) {
+      if (x + direction[0] < constants.width && x + direction[0] >= 0 && y + direction[1] < constants.height && y + direction[1] >= 0) {
+        let oldBg = constants.blocks[0].get(`${x + direction[0]},${y + direction[1]}`)
+        let oldFg = constants.blocks[1].get(`${x + direction[0]},${y + direction[1]}`)
+
+        if (oldBg === undefined) oldBg = new Block(0)
+        if (oldFg === undefined) oldFg = new Block(0)
+
+        if (oldBg.equals(bg) && oldFg.equals(fg)) {
+          let oldBlock = constants.blocks[layer].get(`${x + direction[0]},${y + direction[1]}`)
+          if (oldBlock === undefined) oldBlock = new Block(0)
+          if (!oldBlock.equals(newBlock))
+            fill(x + direction[0], y + direction[1], bg, fg, newBlock)
+        }
+      }
+    }
+  } else {
+    constants.blocks[0].delete(`${x},${y}`)
+    constants.blocks[1].delete(`${x},${y}`)
+    for (const direction of directions) {
+      if (x + direction[0] < constants.width && x + direction[0] >= 0 && y + direction[1] < constants.height && y + direction[1] >= 0) {
+        let oldBg = constants.blocks[0].get(`${x + direction[0]},${y + direction[1]}`)
+        let oldFg = constants.blocks[1].get(`${x + direction[0]},${y + direction[1]}`)
+
+        if (oldBg === undefined) oldBg = new Block(0)
+        if (oldFg === undefined) oldFg = new Block(0)
+
+        if (oldBg.equals(bg) && oldFg.equals(fg)) {
+          fill(x + direction[0], y + direction[1], bg, fg, null)
+        }
+      }
+    }
+  }
+
 }
 
 function ck(mode, key, value = "") {
@@ -230,15 +305,18 @@ function mouseMove(e) {
 window.addEventListener("mousedown", e => {
   if (e.composedPath().indexOf(top) == -1) mouseMove(e)
 })
+
 window.addEventListener("mousemove", e => {
   if (!ck("has", "mouse")) return
   mouseMove(e)
 })
+
 window.addEventListener("keydown", e => {
   if (e.composedPath().indexOf(top) == -1) {
     ck("set", e.keyCode, true)
   }
 })
+
 window.addEventListener("keyup", e => {
   if (e.composedPath().indexOf(top) == -1) ck("delete", e.keyCode)
 })
