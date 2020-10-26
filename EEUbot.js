@@ -85,10 +85,6 @@ function drawUiFull(p) {
   }
 }
 
-if (document.querySelector('button.selected') == null) {
-  document.querySelector('.ui.bottom>div:nth-child(1)>button:nth-child(1)').click()
-}
-
 window.constants = constants
 
 function findBlock(id) {
