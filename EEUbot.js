@@ -149,11 +149,11 @@ function drawUiFull(p) {
     if (findBlock(k)[1] == p) {
       if (currentId == k) {
         uiCtx.beginPath()
-        uiCtx.rect((24 + j) % (ui.width - 48) - 1, Math.floor((24 + j) / (ui.width - 48)) * 30 + 11, 26, 26)
+        uiCtx.rect((24 + j) % (window.innerWidth - 50 - 48) - 1, Math.floor((24 + j) / (window.innerWidth - 50 - 48)) * 30 + 11, 26, 26)
         uiCtx.stroke()
       }
-      clickAreas.push([(24 + j) % (ui.width - 48), Math.floor((24 + j) / (ui.width - 48)) * 30 + 12, k, p])
-      drawUi(k, (24 + j) % (ui.width - 48), Math.floor((24 + j) / (ui.width - 48)) * 30 + 12)
+      clickAreas.push([(24 + j) % (window.innerWidth - 50 - 48), Math.floor((24 + j) / (window.innerWidth - 50 - 48)) * 30 + 12, k, p])
+      drawUi(k, (24 + j) % (window.innerWidth - 50 - 48), Math.floor((24 + j) / (window.innerWidth - 50 - 48)) * 30 + 12)
       j += 25
     }
     k++
