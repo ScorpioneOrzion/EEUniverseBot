@@ -223,11 +223,6 @@ window.onload = () => {
   ui.height = 150
   drawCanvas()
 }
-window.onresize = () => {
-  ui.width = window.innerWidth - 50
-  ui.height = 150
-  drawUiFull(currentLayer)
-}
 
 function placeBlock(x, y, empty) {
   const key = `${x},${y}`
