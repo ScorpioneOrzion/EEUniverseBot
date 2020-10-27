@@ -81,12 +81,14 @@ gameCanvas.onmousemove = event => {
   }
 }
 
+let currentLayer = -1;
 areas.forEach(element => {
   element.value = areaValue++
   element.onclick = () => {
     document.querySelector('button.selected')?.classList.remove('selected')
     element.classList.add('selected')
     drawUiFull(element.value)
+    currentLayer = element.value
   }
 })
 
@@ -149,11 +151,11 @@ function drawUiFull(p) {
     if (findBlock(k)[1] == p) {
       if (currentId == k) {
         uiCtx.beginPath()
-        uiCtx.rect((24 + j) % (window.innerWidth - 50 - 48) - 1, Math.floor((24 + j) / (window.innerWidth - 50 - 48)) * 30 + 11, 26, 26)
+        uiCtx.rect((24 + j) % (ui.width - 48) - 1, Math.floor((24 + j) / (ui.width - 48)) * 30 + 11, 26, 26)
         uiCtx.stroke()
       }
-      clickAreas.push([(24 + j) % (window.innerWidth - 50 - 48), Math.floor((24 + j) / (window.innerWidth - 50 - 48)) * 30 + 12, k, p])
-      drawUi(k, (24 + j) % (window.innerWidth - 50 - 48), Math.floor((24 + j) / (window.innerWidth - 50 - 48)) * 30 + 12)
+      clickAreas.push([(24 + j) % (ui.width - 48), Math.floor((24 + j) / (ui.width - 48)) * 30 + 12, k, p])
+      drawUi(k, (24 + j) % (ui.width - 48), Math.floor((24 + j) / (ui.width - 48)) * 30 + 12)
       j += 25
     }
     k++
@@ -219,7 +221,14 @@ function loop() {
 window.gameCanvas = gameCanvas
 loop()
 window.onload = () => {
+  ui.width = window.innerWidth - 50
+  ui.height = 150
   drawCanvas()
+}
+window.onresize = () => {
+  ui.width = window.innerWidth - 50
+  ui.height = 150
+  drawUiFull(currentLayer)
 }
 
 function placeBlock(x, y, empty) {
