@@ -55,9 +55,9 @@ const ground = new Image()
 ground.src = './ground.png'
 const areas = document.querySelectorAll('.ui.bottom>div:nth-child(1)>button')
 
-let i = 0
+let areaValue = 0
 areas.forEach(element => {
-  element.value = i++
+  element.value = areaValue++
   element.onclick = () => {
     document.querySelector('button.selected')?.classList.remove('selected')
     element.classList.add('selected')
@@ -87,6 +87,7 @@ function drawUiFull(p) {
 }
 
 window.constants = constants
+window.gameCanvas = gameCanvas
 
 function findBlock(id) {
   if (blockLayers.bg.some(list => list[1] >= id && list[0] <= id)) return [0, 2];
@@ -144,12 +145,6 @@ function moveScreen() {
   constants.y = Math.max(-10, Math.min(constants.height - 5, constants.y))
 }
 
-function checkDraw(x, y) {
-  if (x + 24 < 0 || y + 24 < 0) return false
-  if (x - 24 > gameCanvas.width || y - 24 > gameCanvas.height) return false
-  return true
-}
-
 function draw() {
   if (gameCanvas.height !== window.innerHeight) gameCanvas.height = window.innerHeight
   if (gameCanvas.width !== window.innerWidth) gameCanvas.width = window.innerWidth
@@ -167,12 +162,13 @@ function clear() {
 }
 
 function drawBackground() {
-  for (let i = 0; i < constants.width; i++) {
-    if ((i - constants.x) * 24 - 24 > gameCanvas.width) break;
-    for (let j = 0; j < constants.height; j++) {
-      if ((j - constants.y) * 24 - 24 > gameCanvas.height) break;
-      if (checkDraw((i - constants.x) * 24, (j - constants.y) * 24))
-        gameCtx.drawImage(ground, (i - constants.x) * 24, (j - constants.y) * 24, 24, 24)
+  for (let i = Math.min(Math.floor(-constants.x), 0); i < constants.width; i++) {
+    let dx = (i - constants.x)
+    if (dx > Math.floor(gameCanvas.width / 24) + 1) break
+    for (let j = Math.min(Math.floor(-constants.y), 0); j < constants.height; j++) {
+      let dy = (j - constants.y)
+      if (dy > Math.floor(gameCanvas.height / 24) + 1) break
+      gameCtx.drawImage(ground, dx * 24, dy * 24, 24, 24)
     }
   }
 }
@@ -190,8 +186,9 @@ function drawBlocks() {
 }
 
 function drawBlock(id, x, y) {
-  if (checkDraw((x - constants.x) * 24, (y - constants.y) * 24))
-    gameCtx.drawImage(image, (id & 15) * 25, Math.floor(id / 16) * 25, 24, 24, (x - constants.x) * 24, (y - constants.y) * 24, 24, 24)
+  let dx = x - constants.x, dy = y - constants.y
+  if (!(dx < -1 || dy < -1 || gameCanvas.width / 24 < dx || gameCanvas.height / 24 < dy))
+    gameCtx.drawImage(image, (id & 15) * 25, Math.floor(id / 16) * 25, 24, 24, dx * 24, dy * 24, 24, 24)
 }
 
 function drawMiniMap(id, x, y) {
@@ -232,7 +229,8 @@ function placeBlocks() {
   } else {
     switch (constants.drawMode) {
       case "draw":
-        constants.blocks[layer].set(key, new Block(constants.currentId))
+        if (constants.currentId !== 0)
+          constants.blocks[layer].set(key, new Block(constants.currentId))
         break;
       case "fill":
         let bg = constants.blocks[0].get(key)
