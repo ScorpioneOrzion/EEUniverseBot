@@ -55,8 +55,6 @@ gameCanvas.width = worldWidth * 24
 gameCanvas.height = worldHeight * 24
 miniMapCanvas.width = worldWidth * miniMapSize
 miniMapCanvas.height = worldHeight * miniMapSize
-ui.width = window.innerWidth - 50
-ui.height = 150
 
 // onclickEvents
 ui.onclick = event => {
