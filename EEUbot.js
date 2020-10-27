@@ -50,12 +50,6 @@ let currentDrawMode = "draw";
 let currentId = 0;
 let areaValue = 0;
 
-// resize canvas
-gameCanvas.width = worldWidth * 24
-gameCanvas.height = worldHeight * 24
-miniMapCanvas.width = worldWidth * miniMapSize
-miniMapCanvas.height = worldHeight * miniMapSize
-
 // onclickEvents
 ui.onclick = event => {
   let x = event.clientX - 50
@@ -197,9 +191,17 @@ function moveScreen() {
 }
 
 function drawCanvas() {
+  gameCanvas.width = worldWidth * 24
+  gameCanvas.height = worldHeight * 24
+  miniMapCanvas.height = worldHeight * miniMapSize
+  miniMapCanvas.width = worldWidth * miniMapSize
+  gameCanvas.style.left = "0px"
+  gameCanvas.style.top = "0px"
+
   clear()
   clearMinimap()
   drawBackgroundTiles()
+
   for (const [key, value] of background) {
     drawBlock(value.id, ...key.split(","))
     drawMiniMap(value.id, ...key.split(","))
@@ -362,7 +364,9 @@ writeConnect.onclick = () => {
 changeRoom.onclick = () => {
   roomId.value = prompt("Enter roomId", roomId.value)
 }
-
+window.connect = connect
+window.worldHeight = worldHeight
+window.worldWidth = worldWidth
 async function connect(authToken) {
   let server;
   await EEUniverse.connect(authToken).then(function (connection) {
@@ -399,6 +403,7 @@ function BlockHandeler(initMessage) { //false = 0
   background.clear()
   worldWidth = initMessage.get(9)
   worldHeight = initMessage.get(10)
+  console.log(initMessage.get(9), worldWidth, initMessage.get(10), worldHeight)
   gameCanvas.style.left = "0px"
   gameCanvas.style.top = "0px"
   let index = 0;
