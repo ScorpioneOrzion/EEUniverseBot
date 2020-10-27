@@ -219,8 +219,6 @@ function loop() {
 window.gameCanvas = gameCanvas
 loop()
 window.onload = () => {
-  ui.width = window.innerWidth - 50
-  ui.height = 150
   drawCanvas()
 }
 
