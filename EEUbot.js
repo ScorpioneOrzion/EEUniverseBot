@@ -79,14 +79,12 @@ gameCanvas.onmousemove = event => {
   }
 }
 
-let currentLayer = -1;
 areas.forEach(element => {
   element.value = areaValue++
   element.onclick = () => {
     document.querySelector('button.selected')?.classList.remove('selected')
     element.classList.add('selected')
     drawUiFull(element.value)
-    currentLayer = element.value
   }
 })
 
@@ -219,6 +217,7 @@ function loop() {
 window.gameCanvas = gameCanvas
 loop()
 window.onload = () => {
+  console.log(ui.width)
   drawCanvas()
 }
 
