@@ -91,14 +91,16 @@
 <body oncontextmenu="return!1">
   <canvas id="gameDraw"></canvas>
   <canvas id="minimap"></canvas>
-  <div id="topUi" class="ui top">
-    <div style="display: flex;">
+  <div id="topUi" class="ui top"
+    style="display: grid; grid-template-rows: 18px 1fr; grid-template-columns: 100px 100px 100px 100px 1fr;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; grid-column: 1 / span 4;">
       <button style="height: 18px;" id="changeroom">Change roomID</button>
       <textarea name="roomId" id="roomId" style="resize:none;" rows="1" cols="12" maxlength="12"
         placeholder="roomId"></textarea>
       <button style="height: 18px;" id="roomIdConnect">Load from room</button>
       <button style="height: 18px;" id="writeData">Write to room</button>
     </div>
+    <button id="miniMapToggle" style="grid-column: 1 / span 1; grid-row: 2 / span 1;">HideMinimap</button>
   </div>
   <div id="bottomUi" class="ui bottom">
     <div>

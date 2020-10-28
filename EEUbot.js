@@ -5,12 +5,12 @@ import { Block } from './blocks.js'
 import { exp as EEUniverse } from './EEUniverse.js'
 
 //ui
-const top = document.querySelector('#topUi')
 const roomId = document.getElementById("roomId");
 const roomConnect = document.getElementById("roomIdConnect")
 const writeConnect = document.getElementById("writeData")
 const changeRoom = document.getElementById("changeroom")
 const areas = document.querySelectorAll('.ui.bottom>div:nth-child(1)>button')
+const miniMapToggle = document.getElementById('miniMapToggle')
 
 //images
 const image = new Image()
@@ -83,6 +83,10 @@ areas.forEach(element => {
     currentLayer = element.value
   }
 })
+
+miniMapToggle.onclick = () => {
+  miniMapCanvas.hidden = !miniMapCanvas.hidden
+}
 
 //general Functions
 function findBlock(id) {
@@ -314,15 +318,11 @@ function fill(x, y, bg, fg, newBlock) {
 }
 
 window.addEventListener("keydown", e => {
-  if (e.composedPath().indexOf(top) == -1) {
-    keyboard.set(e.keyCode, true)
-  }
+  keyboard.set(e.keyCode, true)
 })
 
 window.addEventListener("keyup", e => {
-  if (e.composedPath().indexOf(top) == -1) {
-    keyboard.delete(e.keyCode)
-  }
+  keyboard.delete(e.keyCode)
 })
 
 window.addEventListener("message", event => {
