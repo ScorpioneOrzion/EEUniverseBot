@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EEU editor
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Editor in EEU
 // @author       ScorpioneOrzion
 // @match        https://ee-universe.com/*
@@ -40,20 +40,18 @@
     case "https://ee-universe.com/game/index.html":
       var editor = document.createElement("iframe");
       editor.src = "https://scorpioneorzion.github.io/EEUniverseBot/bot.html";
-      editor.style = "width: 100vw; height: 100vh;"
+      editor.style = "width: 100vw;height: 100vh;z-index: 1;"
       editor.style.display = "none"
       window.onload = () => {
-        document.querySelector("body > div:nth-child(7)").parentElement.appendChild(editor);
+        document.querySelector("body > script:nth-child(6)").parentElement.appendChild(editor);
       }
 
       window.addEventListener("message", event => {
         var origin = event.origin || event.originalEvent.origin;
         if (origin !== "https://ee-universe.com") return
         if (event.data == "block") {
-          document.querySelector("body > div:nth-child(7)").style.display = "block"
           editor.style.display = "none"
         } else if (event.data == "none") {
-          document.querySelector("body > div:nth-child(7)").style.display = "none"
           editor.style.display = "block"
         } else if (typeof event.data == "string" && event.data.includes("token")) {
           editor.contentWindow.postMessage(event.data, editor.src)
