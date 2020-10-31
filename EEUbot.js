@@ -119,7 +119,7 @@ gameCanvas.oncontextmenu = event => {
       drawBlock(fg.id, x, y, fg.args[fgArgs.r] ?? 0)
       drawMiniMap(fg.id, x, y)
     } else {
-
+      null
     }
   }
 }
@@ -303,6 +303,9 @@ loop()
 window.onload = () => {
   drawCanvas()
 }
+window.connect = connect
+window.foreground = foreground
+window.argument = argument
 
 function placeBlock(x, y, empty) {
   const key = getKey(x, y)
