@@ -42,6 +42,13 @@ const MessageType = {
   BgColor: 26,
   Won: 27,
   Reset: 28,
+  Notify: 29,
+  Teleport: 30,
+  Effect: 31,
+  SwitchLocal: 32,
+  SwitchGlobal: 33,
+  CoinGold: 34,
+  CoinBlue: 35,
 
   RoomConnect: 0,
   RoomDisconnect: 1,

@@ -11,6 +11,7 @@ const writeConnect = document.getElementById("writeData")
 const changeRoom = document.getElementById("changeroom")
 const areas = document.querySelectorAll('.ui.bottom>div:nth-child(1)>button')
 const miniMapToggle = document.getElementById('miniMapToggle')
+const argsEdit = document.getElementById('edit-arguments')
 
 //images
 const image = new Image()
@@ -35,8 +36,10 @@ const blockLayers = {
 
 const background = new Map();
 const foreground = new Map();
-let clickAreas = [];
 const keyboard = new Map();
+const argument = new Map();
+
+let clickAreas = [];
 let token;
 let connectionServer;
 let place = false;
@@ -50,6 +53,29 @@ let currentDrawMode = "draw";
 let currentId = 0;
 let areaValue = 0;
 
+//init functions
+for (const arg of args) {
+  if (arg[1].length === 0) continue
+  let argumentList = []
+  let rotate = -1;
+  for (let i = 0; i < arg[1].length; i++) {
+    switch (typeof arg[1][i]) {
+      case "number":
+        argumentList.push([0, arg[1][i]])
+        if (arg[1][i] == 3) {
+          rotate = i
+        }
+        break;
+      case "string":
+        argumentList.push(["", parseInt(arg[1][i].split(/\D/).join(""))])
+        break;
+    }
+  }
+  if (rotate !== -1) {
+    argumentList.r = rotate
+  }
+  argument.set(arg[0], argumentList)
+}
 // onclickEvents
 ui.onclick = event => {
   let x = event.clientX - 50
@@ -64,12 +90,53 @@ ui.onclick = event => {
 }
 
 gameCanvas.onclick = event => {
-  placeBlock(Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24), Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24), event.shiftKey)
+  const x = Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24)
+  const y = Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24)
+  switch (currentDrawMode) {
+    case "draw":
+    case "fill":
+      placeBlock(x, y, event.shiftKey)
+      break;
+  }
+}
+
+gameCanvas.oncontextmenu = event => {
+  const x = Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24)
+  const y = Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24)
+
+  const key = getKey(x, y)
+  let fg = foreground.get(key)
+  if (fg) {
+    if (typeof argument.get(fg.id)?.r == "number" && fg.args.length == 1) {
+      let fgArgs = argument.get(fg.id)
+      fgArgs[fgArgs.r][0] = fg.args[fgArgs.r] = fg.args[fgArgs.r] + 1 & 3
+
+      drawBackground(x, y)
+      if (background.get(key)) {
+        drawBlock(background.get(key).id, x, y, background.get(key).args[argument.get(background.get(key).id)?.r] ?? 0)
+        drawMiniMap(background.get(key).id, x, y)
+      }
+      drawBlock(fg.id, x, y, fg.args[fgArgs.r] ?? 0)
+      drawMiniMap(fg.id, x, y)
+    } else {
+
+    }
+  }
 }
 
 gameCanvas.onmousemove = event => {
-  if (event.which) {
-    placeBlock(Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24), Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24), event.shiftKey)
+  const x = Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24)
+  const y = Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24)
+  switch (currentDrawMode) {
+    case "draw":
+    case "fill":
+      switch (event.which) {
+        case 1:
+        case 3:
+          placeBlock(x, y, event.shiftKey)
+          break;
+      }
+      break;
   }
 }
 
@@ -102,9 +169,11 @@ function getLayer(layer) {
       return background
     case 1:
       return foreground
-    default:
-      break;
   }
+}
+
+function getKey(x, y) {
+  return `${x},${y}`
 }
 
 //drawFunctions
@@ -125,8 +194,13 @@ function drawUi(id, x, y) {
   uiCtx.drawImage(image, (id & 15) * 25, Math.floor(id / 16) * 25, 24, 24, x, y, 24, 24)
 }
 
-function drawBlock(id, x, y) {
-  gameCtx.drawImage(image, (id & 15) * 25, Math.floor(id / 16) * 25, 24, 24, x * 24, y * 24, 24, 24)
+function drawBlock(id, x, y, angle) {
+  gameCtx.save();
+  gameCtx.translate(x * 24, y * 24);
+  gameCtx.rotate(angle * Math.PI / 2);
+  let rotate = ((_) => [(0 - (-_[0])) * -24, (_[0] ^ _[1]) * -24])((4 + (angle & 3)).toString(2).slice(-2))
+  gameCtx.drawImage(image, (id & 15) * 25, Math.floor(id / 16) * 25, 24, 24, ...rotate, 24, 24)
+  gameCtx.restore();
 }
 
 function drawMiniMap(id, x, y) {
@@ -207,11 +281,11 @@ function drawCanvas() {
   drawBackgroundTiles()
 
   for (const [key, value] of background) {
-    drawBlock(value.id, ...key.split(","))
+    drawBlock(value.id, ...key.split(","), value.args[argument.get(value.id)?.r] ?? 0)
     drawMiniMap(value.id, ...key.split(","))
   }
   for (const [key, value] of foreground) {
-    drawBlock(value.id, ...key.split(","))
+    drawBlock(value.id, ...key.split(","), value.args[argument.get(value.id)?.r] ?? 0)
     drawMiniMap(value.id, ...key.split(","))
   }
 }
@@ -224,14 +298,14 @@ function loop() {
   ui.width = 906
   drawUiFull(currentLayer)
 }
-window.gameCanvas = gameCanvas
+window.foreground = foreground
 loop()
 window.onload = () => {
   drawCanvas()
 }
 
 function placeBlock(x, y, empty) {
-  const key = `${x},${y}`
+  const key = getKey(x, y)
   switch (currentDrawMode) {
     case "draw":
       if (currentId === 0 || empty) {
@@ -241,22 +315,21 @@ function placeBlock(x, y, empty) {
           background.delete(key)
         }
       } else {
-        getLayer(findBlock(currentId)[0]).set(key, new Block(currentId))
+        getLayer(findBlock(currentId)[0]).set(key, new Block(currentId, ...(argument.get(currentId) ?? []).map(value => value[0])))
       }
 
       drawMiniMap(12, x, y)
       drawBackground(x, y)
       if (background.get(key)) {
-        drawBlock(background.get(key).id, x, y)
+        drawBlock(background.get(key).id, x, y, background.get(key).args[argument.get(background.get(key).id)?.r] ?? 0)
         drawMiniMap(background.get(key).id, x, y)
       }
       if (foreground.get(key)) {
-        drawBlock(foreground.get(key).id, x, y)
+        drawBlock(foreground.get(key).id, x, y, foreground.get(key).args[argument.get(foreground.get(key).id)?.r] ?? 0)
         drawMiniMap(foreground.get(key).id, x, y)
       }
       break;
     case "fill":
-      console.log(true)
       let bg = background.get(key)
       let fg = foreground.get(key)
       if (!bg) bg = new Block(0)
@@ -265,7 +338,7 @@ function placeBlock(x, y, empty) {
       if (empty) {
         fill(x, y, bg, fg, null)
       } else {
-        fill(x, y, bg, fg, new Block(currentId))
+        fill(x, y, bg, fg, new Block(currentId, ...(argument.get(currentId) ?? []).map(value => value[0])))
       }
       drawCanvas()
       break;
@@ -274,36 +347,41 @@ function placeBlock(x, y, empty) {
 
 function fill(x, y, bg, fg, newBlock) {
   const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]]
-
+  const key = getKey(x, y)
   if (newBlock instanceof Block) {
     const layer = findBlock(newBlock.id)[0]
+
     if (newBlock.id === 0)
-      getLayer(layer).delete(`${x},${y}`)
+      getLayer(layer).delete(key)
     else
-      getLayer(layer).set(`${x},${y}`, newBlock)
+      getLayer(layer).set(key, newBlock)
+
     for (const direction of directions) {
       if (x + direction[0] < worldWidth && x + direction[0] >= 0 && y + direction[1] < worldHeight && y + direction[1] >= 0) {
-        let oldBg = background.get(`${x + direction[0]},${y + direction[1]}`)
-        let oldFg = foreground.get(`${x + direction[0]},${y + direction[1]}`)
+        const newKey = getKey(x + direction[0], y + direction[1])
+        let oldBg = background.get(newKey)
+        let oldFg = foreground.get(newKey)
 
         if (oldBg === undefined) oldBg = new Block(0)
         if (oldFg === undefined) oldFg = new Block(0)
 
         if (oldBg.equals(bg) && oldFg.equals(fg)) {
-          let oldBlock = getLayer(layer).get(`${x + direction[0]},${y + direction[1]}`)
+          let oldBlock = getLayer(layer).get(newKey)
           if (oldBlock === undefined) oldBlock = new Block(0)
+
           if (!oldBlock.equals(newBlock))
             fill(x + direction[0], y + direction[1], bg, fg, newBlock)
         }
       }
     }
   } else {
-    background.delete(`${x},${y}`)
-    foreground.delete(`${x},${y}`)
+    background.delete(key)
+    foreground.delete(key)
     for (const direction of directions) {
       if (x + direction[0] < worldWidth && x + direction[0] >= 0 && y + direction[1] < worldHeight && y + direction[1] >= 0) {
-        let oldBg = background.get(`${x + direction[0]},${y + direction[1]}`)
-        let oldFg = foreground.get(`${x + direction[0]},${y + direction[1]}`)
+        const newKey = getKey(x + direction[0], y + direction[1])
+        let oldBg = background.get(newKey)
+        let oldFg = foreground.get(newKey)
 
         if (oldBg === undefined) oldBg = new Block(0)
         if (oldFg === undefined) oldFg = new Block(0)
@@ -317,12 +395,12 @@ function fill(x, y, bg, fg, newBlock) {
 
 }
 
-window.addEventListener("keydown", e => {
-  keyboard.set(e.keyCode, true)
+window.addEventListener("keydown", event => {
+  keyboard.set(event.which, true)
 })
 
-window.addEventListener("keyup", e => {
-  keyboard.delete(e.keyCode)
+window.addEventListener("keyup", event => {
+  keyboard.delete(event.which)
 })
 
 window.addEventListener("message", event => {
@@ -411,21 +489,27 @@ function BlockHandeler(initMessage) { //false = 0
     for (let x = 0; x < worldWidth; x++) {
       let blocks = initMessage.get(11 + index);
       if (blocks === false) blocks = 0;
+
       let foregroundBlock = EEUniverse.getFgId(blocks);
       let backgroundBlock = EEUniverse.getBgId(blocks);
+      let key = getKey(x, y)
       let argumentList = [];// not yet used
       index++
+
       let maxArguments = args.get(foregroundBlock).length
+
       for (let i = 0; i < maxArguments; i++) {
         argumentList.push(initMessage.get(11 + index++));
       }
+
       const bg = new Block(backgroundBlock) //this way both fgs and bgs can have arguments. for later implementation though
       const fg = new Block(foregroundBlock, ...argumentList);
+
       if (bg.id !== 0) {
-        background.set(`${x},${y}`, bg)
+        background.set(key, bg)
       }
       if (fg.id !== 0) {
-        foreground.set(`${x},${y}`, fg)
+        foreground.set(key, fg)
       }
     }
   }
@@ -440,19 +524,23 @@ function CheckDifference(initMessage) {
     for (let x = 0; x < width; x++) {
       let blocks = initMessage.get(11 + index);
       if (blocks === false) blocks = 0;
+
       let foregroundBlock = EEUniverse.getFgId(blocks);
       let backgroundBlock = EEUniverse.getBgId(blocks);
+      let key = getKey(x, y)
       let argumentList = [];
       index++
+
       let maxArguments = args.get(foregroundBlock).length
       for (let i = 0; i < maxArguments; i++) {
         argumentList.push(initMessage.get(11 + index++));
       }
+
       const bg = new Block(backgroundBlock);
       const fg = new Block(foregroundBlock, ...argumentList);
 
-      let newBg = background.get(`${x},${y}`)
-      let newFg = foreground.get(`${x},${y}`)
+      let newBg = background.get(key)
+      let newFg = foreground.get(key)
 
       if (newBg === undefined) newBg = new Block(0)
       if (newFg === undefined) newFg = new Block(0)

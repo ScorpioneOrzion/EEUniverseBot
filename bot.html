@@ -16,6 +16,7 @@
     * {
       padding: 0;
       margin: 0;
+      z-index: 0;
     }
 
     body {
@@ -83,6 +84,20 @@
     .ui.min {
       height: 0px;
     }
+
+    #edit-arguments {
+      height: calc(var(--height) * 1px);
+      width: calc(var(--width) * 1px);
+      top: calc(50vh - var(--height) * 1px / 2);
+      left: calc(50vw - var(--width) * 1px / 2);
+      display: grid;
+      grid-template-rows: 1fr 1fr 1fr 1fr;
+      z-index: 1;
+      --width: 135;
+      --height: 120;
+      position: absolute;
+      display: none;
+    }
   </style>
   <script src="https://kit.fontawesome.com/176978a92b.js" crossorigin="anonymous"></script>
   <script src="./EEUbot.js" defer type="module"></script>
@@ -101,6 +116,9 @@
       <button style="height: 18px;" id="writeData">Write to room</button>
     </div>
     <button id="miniMapToggle" style="grid-column: 1 / span 1; grid-row: 2 / span 1;">HideMinimap</button>
+  </div>
+  <div id="edit-arguments">
+    <div></div>
   </div>
   <div id="bottomUi" class="ui bottom">
     <div>
