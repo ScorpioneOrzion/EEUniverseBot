@@ -303,9 +303,6 @@ loop()
 window.onload = () => {
   drawCanvas()
 }
-window.connect = connect
-window.foreground = foreground
-window.argument = argument
 
 function placeBlock(x, y, empty) {
   const key = getKey(x, y)
@@ -445,9 +442,7 @@ writeConnect.onclick = () => {
 changeRoom.onclick = () => {
   roomId.value = prompt("Enter roomId", roomId.value)
 }
-window.connect = connect
-window.worldHeight = worldHeight
-window.worldWidth = worldWidth
+
 async function connect(authToken) {
   let server;
   await EEUniverse.connect(authToken).then(function (connection) {
