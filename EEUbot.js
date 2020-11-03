@@ -12,6 +12,10 @@ const changeRoom = document.getElementById("changeroom")
 const areas = document.querySelectorAll('.ui.bottom>div:nth-child(1)>button')
 const miniMapToggle = document.getElementById('miniMapToggle')
 const argsEdit = document.getElementById('edit-arguments')
+const exitEdit = document.getElementById('edit-exit')
+const titelEdit = document.getElementById('title-args')
+const draw = document.getElementById('draw')
+const drawMode = document.getElementById('drawMode').children[1]
 
 //images
 const image = new Image()
@@ -25,7 +29,7 @@ const gameCtx = gameCanvas.getContext("2d");
 const miniMapCanvas = document.querySelector("body > canvas:nth-child(2)")
 const miniMapCtx = miniMapCanvas.getContext("2d");
 const ui = document.getElementById('ui');
-const uiCtx = ui.getContext("2d")
+const uiCtx = ui.getContext("2d");
 
 //static variables
 const blockLayers = {
@@ -76,8 +80,26 @@ for (const arg of args) {
   }
   argument.set(arg[0], argumentList)
 }
+argsEdit.style.display = "none"
+
 // onclickEvents
+exitEdit.onclick = () => {
+  argsEdit.style.display = "none"
+}
+
+draw.onclick = () => {
+  drawMode.classList.toggle('open')
+}
+
+for (const child of drawMode.children) {
+  child.onclick = () => {
+    currentDrawMode = child.innerText.toLowerCase()
+    drawMode.classList.toggle('open')
+  }
+}
+
 ui.onclick = event => {
+  if (argsEdit.style.display !== "none") return
   let x = event.clientX - 50
   let y = event.clientY - window.innerHeight + 150
   for (const area of clickAreas) {
@@ -90,24 +112,35 @@ ui.onclick = event => {
 }
 
 gameCanvas.onclick = event => {
+  if (argsEdit.style.display !== "none") return
   const x = Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24)
   const y = Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24)
+  const key = getKey(x, y)
   switch (currentDrawMode) {
     case "draw":
+      placeBlock(x, y, lastArg(event, key))
+      break;
     case "fill":
-      placeBlock(x, y, event.shiftKey)
+      fillBlock(x, y, background.get(key), foreground.get(key), lastArg(event, key))
+      drawCanvas(false)
+      break;
+    case "replace":
+      replaceBlock(getLayer(findBlock(currentId)[0]).get(key), lastArg(event, key))
       break;
   }
 }
 
 gameCanvas.oncontextmenu = event => {
+  if (argsEdit.style.display !== "none") return
   const x = Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24)
   const y = Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24)
-
   const key = getKey(x, y)
+
   let fg = foreground.get(key)
   if (fg) {
-    if (typeof argument.get(fg.id)?.r == "number" && fg.args.length == 1) {
+    if (argument.get(fg.id) == undefined) {
+      return
+    } else if (typeof argument.get(fg.id)?.r == "number" && fg.args.length == 1) {
       let fgArgs = argument.get(fg.id)
       fgArgs[fgArgs.r][0] = fg.args[fgArgs.r] = fg.args[fgArgs.r] + 1 & 3
 
@@ -119,21 +152,53 @@ gameCanvas.oncontextmenu = event => {
       drawBlock(fg.id, x, y, fg.args[fgArgs.r] ?? 0)
       drawMiniMap(fg.id, x, y)
     } else {
-      null
+      argsEdit.style.display = "block"
+      switch (fg.id) {
+        case 55:
+        case 56:
+        case 57:
+        case 58:
+          titelEdit.innerText = "Sign"
+          break;
+        case 59:
+          titelEdit.innerText = "Portal"
+          break;
+        default:
+          titelEdit.innerText = "Block value"
+          break;
+      }
     }
   }
 }
 
 gameCanvas.onmousemove = event => {
+  if (argsEdit.style.display !== "none") return
   const x = Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24)
   const y = Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24)
+  const key = getKey(x, y)
   switch (currentDrawMode) {
     case "draw":
+      switch (event.which) {
+        case 1:
+        case 3:
+          placeBlock(x, y, lastArg(event, key))
+          break;
+      }
+      break;
     case "fill":
       switch (event.which) {
         case 1:
         case 3:
-          placeBlock(x, y, event.shiftKey)
+          fillBlock(x, y, background.get(key), foreground.get(key), lastArg(event, key))
+          drawCanvas(false)
+          break;
+      }
+      break;
+    case "replace":
+      switch (event.which) {
+        case 1:
+        case 3:
+          replaceBlock(getLayer(findBlock(currentId)[0]).get(key), lastArg(event, key))
           break;
       }
       break;
@@ -174,6 +239,10 @@ function getLayer(layer) {
 
 function getKey(x, y) {
   return `${x},${y}`
+}
+
+function lastArg(event, key) {
+  return event.shiftKey ? foreground.get(key).id !== 0 ? 1 : 0 : makeBlock(currentId)
 }
 
 //drawFunctions
@@ -268,28 +337,34 @@ function moveScreen() {
   }
 }
 
-function drawCanvas() {
-  gameCanvas.width = worldWidth * 24
-  gameCanvas.height = worldHeight * 24
-  miniMapCanvas.height = worldHeight * miniMapSize
-  miniMapCanvas.width = worldWidth * miniMapSize
-  gameCanvas.style.left = "0px"
-  gameCanvas.style.top = "0px"
+//drawFull canvas
+function drawCanvas(toggle) {
+  if (toggle) {
+    gameCanvas.width = worldWidth * 24
+    gameCanvas.height = worldHeight * 24
+    miniMapCanvas.height = worldHeight * miniMapSize
+    miniMapCanvas.width = worldWidth * miniMapSize
+    gameCanvas.style.left = "0px"
+    gameCanvas.style.top = "0px"
+  }
 
   clear()
   clearMinimap()
   drawBackgroundTiles()
 
   for (const [key, value] of background) {
+    if (value.id == 0) continue
     drawBlock(value.id, ...key.split(","), value.args[argument.get(value.id)?.r] ?? 0)
     drawMiniMap(value.id, ...key.split(","))
   }
   for (const [key, value] of foreground) {
+    if (value.id == 0) continue
     drawBlock(value.id, ...key.split(","), value.args[argument.get(value.id)?.r] ?? 0)
     drawMiniMap(value.id, ...key.split(","))
   }
 }
 
+//setup
 gameCanvas.style.left = "0px"
 gameCanvas.style.top = "0px"
 function loop() {
@@ -298,103 +373,119 @@ function loop() {
   ui.width = 906
   drawUiFull(currentLayer)
 }
-window.foreground = foreground
-loop()
 window.onload = () => {
-  drawCanvas()
+  for (let y = 0; y < worldHeight; y++) {
+    for (let x = 0; x < worldWidth; x++) {
+      foreground.set(getKey(x, y), makeBlock(0))
+      background.set(getKey(x, y), makeBlock(0))
+    }
+  }
+  loop()
+  drawCanvas(true)
+}
+window.foreground = foreground
+window.background = background
+
+//emptyblock
+function makeBlock(id) {
+  return new Block(id, ...(argument.get(id) ?? []).map(value => value[0]))
 }
 
-function placeBlock(x, y, empty) {
+function placeBlock(x, y, newBlock) {
   const key = getKey(x, y)
-  switch (currentDrawMode) {
-    case "draw":
-      if (currentId === 0 || empty) {
-        if (foreground.has(key)) {
-          foreground.delete(key)
-        } else if (background.has(key)) {
-          background.delete(key)
-        }
-      } else {
-        getLayer(findBlock(currentId)[0]).set(key, new Block(currentId, ...(argument.get(currentId) ?? []).map(value => value[0])))
-      }
+  if (typeof newBlock == "number") {
+    if (newBlock) {
+      foreground.set(key, makeBlock(0))
+    } else {
+      background.set(key, makeBlock(0))
+    }
+  }
+  else getLayer(findBlock(newBlock.id)[0]).set(key, newBlock)
 
-      drawMiniMap(12, x, y)
-      drawBackground(x, y)
-      if (background.get(key)) {
-        drawBlock(background.get(key).id, x, y, background.get(key).args[argument.get(background.get(key).id)?.r] ?? 0)
-        drawMiniMap(background.get(key).id, x, y)
-      }
-      if (foreground.get(key)) {
-        drawBlock(foreground.get(key).id, x, y, foreground.get(key).args[argument.get(foreground.get(key).id)?.r] ?? 0)
-        drawMiniMap(foreground.get(key).id, x, y)
-      }
-      break;
-    case "fill":
-      let bg = background.get(key)
-      let fg = foreground.get(key)
-      if (!bg) bg = new Block(0)
-      if (!fg) fg = new Block(0)
-
-      if (empty) {
-        fill(x, y, bg, fg, null)
-      } else {
-        fill(x, y, bg, fg, new Block(currentId, ...(argument.get(currentId) ?? []).map(value => value[0])))
-      }
-      drawCanvas()
-      break;
+  drawMiniMap(12, x, y)
+  drawBackground(x, y)
+  if (background.get(key).id !== 0) {
+    drawBlock(background.get(key).id, x, y, background.get(key).args[argument.get(background.get(key).id)?.r] ?? 0)
+    drawMiniMap(background.get(key).id, x, y)
+  }
+  if (foreground.get(key).id !== 0) {
+    drawBlock(foreground.get(key).id, x, y, foreground.get(key).args[argument.get(foreground.get(key).id)?.r] ?? 0)
+    drawMiniMap(foreground.get(key).id, x, y)
   }
 }
 
-function fill(x, y, bg, fg, newBlock) {
-  const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]]
+function fillBlock(x, y, oldBG, oldFG, newBlock) {
+  const directions = [{ x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }]
   const key = getKey(x, y)
-  if (newBlock instanceof Block) {
-    const layer = findBlock(newBlock.id)[0]
-
-    if (newBlock.id === 0)
-      getLayer(layer).delete(key)
-    else
-      getLayer(layer).set(key, newBlock)
-
+  if (typeof newBlock == "number") {
+    if (newBlock) {
+      foreground.set(key, makeBlock(0))
+    } else {
+      background.set(key, makeBlock(0))
+    }
     for (const direction of directions) {
-      if (x + direction[0] < worldWidth && x + direction[0] >= 0 && y + direction[1] < worldHeight && y + direction[1] >= 0) {
-        const newKey = getKey(x + direction[0], y + direction[1])
-        let oldBg = background.get(newKey)
-        let oldFg = foreground.get(newKey)
-
-        if (oldBg === undefined) oldBg = new Block(0)
-        if (oldFg === undefined) oldFg = new Block(0)
-
-        if (oldBg.equals(bg) && oldFg.equals(fg)) {
-          let oldBlock = getLayer(layer).get(newKey)
-          if (oldBlock === undefined) oldBlock = new Block(0)
-
-          if (!oldBlock.equals(newBlock))
-            fill(x + direction[0], y + direction[1], bg, fg, newBlock)
-        }
+      if (!(0 <= (x + direction.x) && (x + direction.x) < worldWidth)) continue
+      if (!(0 <= (y + direction.y) && (y + direction.y) < worldHeight)) continue
+      const newKey = getKey(x + direction.x, y + direction.y)
+      let oldBg = background.get(newKey)
+      let oldFg = foreground.get(newKey)
+      if (oldBg.equals(oldBG) && oldFg.equals(oldFG) && !(oldBg.id === 0 && oldFg.id === 0)) {
+        fillBlock(x + direction.x, y + direction.y, oldBG, oldFG, newBlock)
       }
     }
   } else {
-    background.delete(key)
-    foreground.delete(key)
+    const layer = findBlock(newBlock.id)[0]
+    getLayer(layer).set(key, newBlock)
     for (const direction of directions) {
-      if (x + direction[0] < worldWidth && x + direction[0] >= 0 && y + direction[1] < worldHeight && y + direction[1] >= 0) {
-        const newKey = getKey(x + direction[0], y + direction[1])
-        let oldBg = background.get(newKey)
-        let oldFg = foreground.get(newKey)
+      if (!(0 <= (x + direction.x) && (x + direction.x) < worldWidth)) continue
+      if (!(0 <= (y + direction.y) && (y + direction.y) < worldHeight)) continue
+      const newKey = getKey(x + direction.x, y + direction.y)
+      let oldBg = background.get(newKey)
+      let oldFg = foreground.get(newKey)
 
-        if (oldBg === undefined) oldBg = new Block(0)
-        if (oldFg === undefined) oldFg = new Block(0)
-
-        if (oldBg.equals(bg) && oldFg.equals(fg)) {
-          fill(x + direction[0], y + direction[1], bg, fg, null)
-        }
+      if (oldBg.id === newBlock.id || oldFg.id === newBlock.id) continue
+      if (oldBg.equals(oldBG) && oldFg.equals(oldFG)) {
+        fillBlock(x + direction.x, y + direction.y, oldBG, oldFG, newBlock)
       }
     }
   }
-
 }
 
+function replaceBlock(oldBlock, newBlock) {
+  let replacement = new Map()
+  if (typeof newBlock === "number" && newBlock === 1) {
+    for (const [key, value] of background) {
+      if (value.id == oldBlock.id) replacement.set(key, makeBlock(0))
+    }
+    for (const [key, value] of replacement) {
+      background.set(key, value)
+    }
+  } else if (typeof newBlock === "number" && newBlock === 0) {
+    for (const [key, value] of foreground) {
+      if (value.id == oldBlock.id) replacement.set(key, makeBlock(0))
+    }
+    for (const [key, value] of replacement) {
+      foreground.set(key, value)
+    }
+  } else {
+    for (const [key, value] of background) {
+      if (value.id == oldBlock.id) replacement.set(key, newBlock)
+    }
+    for (const [key, value] of replacement) {
+      background.set(key, value)
+    }
+    replacement = new Map()
+    for (const [key, value] of foreground) {
+      if (value.id == oldBlock.id) replacement.set(key, newBlock)
+    }
+    for (const [key, value] of replacement) {
+      foreground.set(key, value)
+    }
+  }
+  drawCanvas(false)
+}
+
+//eventlisteners
 window.addEventListener("keydown", event => {
   keyboard.set(event.which, true)
 })
@@ -443,6 +534,7 @@ changeRoom.onclick = () => {
   roomId.value = prompt("Enter roomId", roomId.value)
 }
 
+//connecting
 async function connect(authToken) {
   let server;
   await EEUniverse.connect(authToken).then(function (connection) {
@@ -503,15 +595,11 @@ function BlockHandeler(initMessage) { //false = 0
       const bg = new Block(backgroundBlock) //this way both fgs and bgs can have arguments. for later implementation though
       const fg = new Block(foregroundBlock, ...argumentList);
 
-      if (bg.id !== 0) {
-        background.set(key, bg)
-      }
-      if (fg.id !== 0) {
-        foreground.set(key, fg)
-      }
+      background.set(key, bg)
+      foreground.set(key, fg)
     }
   }
-  drawCanvas()
+  drawCanvas(true)
 }
 
 function CheckDifference(initMessage) {
@@ -540,9 +628,6 @@ function CheckDifference(initMessage) {
       let newBg = background.get(key)
       let newFg = foreground.get(key)
 
-      if (newBg === undefined) newBg = new Block(0)
-      if (newFg === undefined) newFg = new Block(0)
-
       if (!bg.equals(newBg)) {
         connectionServer.send(EEUniverse.MessageType.PlaceBlock, 0, x, y, newBg.id, ...newBg.args);
       }
@@ -552,3 +637,5 @@ function CheckDifference(initMessage) {
     }
   }
 }
+
+//image imports, text, shapes, etc..

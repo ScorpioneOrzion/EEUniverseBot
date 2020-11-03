@@ -49,6 +49,25 @@
       top: 0px;
       height: 50px;
       border-bottom: solid black 1px;
+      display: grid;
+      grid-template-rows: 18px 1fr;
+      grid-template-columns: 100px 100px 100px 100px 1fr;
+    }
+
+    #roomButton {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-column: 1 / span 4;
+    }
+
+    #roomButton>* {
+      height: 18px;
+      resize: none;
+    }
+
+    #miniMapToggle {
+      grid-column: 1 / span 1;
+      grid-row: 2 / span 1;
     }
 
     .ui.bottom {
@@ -64,6 +83,7 @@
       display: grid;
       grid-template-rows: 1fr 1fr 1fr;
       overflow: hidden;
+      --selected: rgb(128, 128, 128);
     }
 
     .ui.bottom>div:nth-child(1)>* {
@@ -74,11 +94,11 @@
 
     .ui.bottom>div:nth-child(1)>.selected {
       background-color: rgb(160, 160, 160);
-      color: rgb(128, 128, 128);
+      color: var(--selected);
     }
 
     .ui.bottom>div:nth-child(1)>*:hover {
-      color: rgb(128, 128, 128);
+      color: var(--selected);
     }
 
     .ui.min {
@@ -91,12 +111,49 @@
       top: calc(50vh - var(--height) * 1px / 2);
       left: calc(50vw - var(--width) * 1px / 2);
       display: grid;
-      grid-template-rows: 1fr 1fr 1fr 1fr;
+      grid-template-rows: 25px 1fr;
       z-index: 1;
       --width: 135;
       --height: 120;
       position: absolute;
+      background-color: var(--backGround);
+    }
+
+    #title-arguments {
+      margin: 2.5px 5px;
+      display: grid;
+      grid-template-columns: 1fr 20px;
+    }
+
+    #drawMode {
+      height: 100%;
+      display: grid;
+      grid-column: 2 / span 1;
+      grid-row: 2 / span 1;
+      font: 1.125em sans-serif;
+      text-align: center;
+    }
+
+    #drawMode>*:first-child {
+      display: inline;
+    }
+
+    #drawMode>*:not(:first-child) {
       display: none;
+      position: absolute;
+      left: 100px;
+      top: 50px;
+      width: 100px;
+    }
+
+    #drawMode>*:not(:first-child).open {
+      display: inline;
+    }
+
+    #drawMode>*:not(:first-child)>button {
+      background-color: rgb(119, 119, 119);
+      width: 100px;
+      z-index: 2;
     }
   </style>
   <script src="https://kit.fontawesome.com/176978a92b.js" crossorigin="anonymous"></script>
@@ -106,18 +163,28 @@
 <body oncontextmenu="return!1">
   <canvas id="gameDraw"></canvas>
   <canvas id="minimap"></canvas>
-  <div id="topUi" class="ui top"
-    style="display: grid; grid-template-rows: 18px 1fr; grid-template-columns: 100px 100px 100px 100px 1fr;">
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; grid-column: 1 / span 4;">
-      <button style="height: 18px;" id="changeroom">Change roomID</button>
-      <textarea name="roomId" id="roomId" style="resize:none;" rows="1" cols="12" maxlength="12"
-        placeholder="roomId"></textarea>
-      <button style="height: 18px;" id="roomIdConnect">Load from room</button>
-      <button style="height: 18px;" id="writeData">Write to room</button>
+  <div id="topUi" class="ui top">
+    <div id="roomButton">
+      <button id="changeroom">Change roomID</button>
+      <textarea name="roomId" id="roomId" rows="1" cols="12" maxlength="12" placeholder="roomId"></textarea>
+      <button id="roomIdConnect">Load from room</button>
+      <button id="writeData">Write to room</button>
     </div>
-    <button id="miniMapToggle" style="grid-column: 1 / span 1; grid-row: 2 / span 1;">HideMinimap</button>
+    <button id="miniMapToggle">HideMinimap</button>
+    <div id="drawMode">
+      <button id="draw">Draw mode</button>
+      <div>
+        <button>Draw</button>
+        <button>Fill</button>
+        <button>Replace</button>
+      </div>
+    </div>
   </div>
   <div id="edit-arguments">
+    <div id="title-arguments">
+      <p id="title-args"></p>
+      <button id="edit-exit" style="background-color: red; color: white; border: none;">x</button>
+    </div>
     <div></div>
   </div>
   <div id="bottomUi" class="ui bottom">
