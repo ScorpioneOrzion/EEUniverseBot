@@ -1,9 +1,11 @@
 import { mapColor } from './static files/mapcolor.js'
-import { args } from './arguments.js'
+import { args } from './static files/arguments.js'
 import { Block } from './static files/blocks.js'
+import { letters } from './static files/letters.js'
 
 import { exp as EEUniverse } from './connect/EEUniverse.js'
 
+console.log(letters)
 //ui
 const roomId = document.getElementById("roomId");
 const roomConnect = document.getElementById("roomIdConnect")
@@ -19,9 +21,9 @@ const drawMode = document.getElementById('drawMode').children[1]
 
 //images
 const image = new Image()
-image.src = './AllBlocks.png'
+image.src = './static files/AllBlocks.png'
 const ground = new Image()
-ground.src = './ground.png'
+ground.src = './static files/ground.png'
 
 //canvas
 const gameCanvas = document.querySelector("body > canvas:nth-child(1)")
@@ -235,6 +237,17 @@ function getLayer(layer) {
     case 1:
       return foreground
   }
+}
+
+function findPattern(str, n) {
+  return parseInt(str, 36).toString(2).replace(new RegExp(`.{${n}}`, "g"), "$&\n").split("\n").slice(1, -1)
+}
+
+function generateStr(strArr) {
+  let len = strArr[0].length
+  strArr.unshift(Array(len).fill(1).join(""))
+  strArr = strArr.join("")
+  return [parseInt(strArr, 2).toString(36), len]
 }
 
 function getKey(x, y) {
