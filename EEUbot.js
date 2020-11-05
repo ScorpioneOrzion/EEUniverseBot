@@ -1,8 +1,8 @@
-import { mapColor } from './mapcolor.js'
+import { mapColor } from './static files/mapcolor.js'
 import { args } from './arguments.js'
-import { Block } from './blocks.js'
+import { Block } from './static files/blocks.js'
 
-import { exp as EEUniverse } from './EEUniverse.js'
+import { exp as EEUniverse } from './connect/EEUniverse.js'
 
 //ui
 const roomId = document.getElementById("roomId");
@@ -534,6 +534,10 @@ changeRoom.onclick = () => {
   roomId.value = prompt("Enter roomId", roomId.value)
 }
 
+window.connectTo = async (authToken) => {
+  connectionServer = await connect(authToken)
+  return connectionServer
+}
 //connecting
 async function connect(authToken) {
   let server;
