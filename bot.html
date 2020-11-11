@@ -9,8 +9,17 @@
     #gameDraw {
       --left: 0;
       --top: 0;
+      z-index: -1;
       position: absolute;
       background-color: var(--backGround);
+    }
+
+    #select {
+      z-index: 0;
+      --left: 0;
+      --top: 0;
+      --selectColor: rgba(10, 43, 134, 0.582);
+      position: absolute;
     }
 
     * {
@@ -36,7 +45,14 @@
       width: calc(var(--width) * 2px);
       height: calc(var(--height) * 2px);
       top: calc(1vh + 50px);
+    }
+
+    #minimap:not(.left) {
       left: 1vw;
+    }
+
+    #minimap.left {
+      right: 1vw;
     }
 
     .ui {
@@ -161,6 +177,7 @@
 </head>
 
 <body oncontextmenu="return!1">
+  <canvas id="select"></canvas>
   <canvas id="gameDraw"></canvas>
   <canvas id="minimap"></canvas>
   <div id="topUi" class="ui top">
@@ -177,6 +194,7 @@
         <button>Draw</button>
         <button>Fill</button>
         <button>Replace</button>
+        <button>Select</button>
       </div>
     </div>
   </div>

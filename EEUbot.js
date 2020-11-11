@@ -5,7 +5,6 @@ import { letters } from './static files/letters.js'
 
 import { exp as EEUniverse } from './connect/EEUniverse.js'
 
-console.log(letters)
 //ui
 const roomId = document.getElementById("roomId");
 const roomConnect = document.getElementById("roomIdConnect")
@@ -26,9 +25,11 @@ const ground = new Image()
 ground.src = './static files/ground.png'
 
 //canvas
-const gameCanvas = document.querySelector("body > canvas:nth-child(1)")
+const selectCanvas = document.querySelector("body > canvas:nth-child(1)")
+const selectCtx = selectCanvas.getContext("2d")
+const gameCanvas = document.querySelector("body > canvas:nth-child(2)")
 const gameCtx = gameCanvas.getContext("2d");
-const miniMapCanvas = document.querySelector("body > canvas:nth-child(2)")
+const miniMapCanvas = document.querySelector("body > canvas:nth-child(3)")
 const miniMapCtx = miniMapCanvas.getContext("2d");
 const ui = document.getElementById('ui');
 const uiCtx = ui.getContext("2d");
@@ -42,6 +43,8 @@ const blockLayers = {
 
 const background = new Map();
 const foreground = new Map();
+const selectArea = new Map();
+const copys = new Map();
 const keyboard = new Map();
 const argument = new Map();
 
@@ -97,6 +100,8 @@ for (const child of drawMode.children) {
   child.onclick = () => {
     currentDrawMode = child.innerText.toLowerCase()
     drawMode.classList.toggle('open')
+    drawSelectArea(0, 0, 0, 0)
+    selectArea.clear()
   }
 }
 
@@ -107,13 +112,13 @@ ui.onclick = event => {
   for (const area of clickAreas) {
     if (area[0] <= x && (area[0] + 24) >= x && (area[1]) <= y && (area[1] + 24) >= y) {
       currentId = area[2]
-      drawUiFull(area[3])
+      drawFullUi(area[3])
       break;
     }
   }
 }
 
-gameCanvas.onclick = event => {
+selectCanvas.onclick = event => {
   if (argsEdit.style.display !== "none") return
   const x = Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24)
   const y = Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24)
@@ -129,10 +134,72 @@ gameCanvas.onclick = event => {
     case "replace":
       replaceBlock(getLayer(findBlock(currentId)[0]).get(key), lastArg(event, key))
       break;
+    case "select":
+      if (!selectArea.has("x") && !selectArea.has("y")) {
+        selectArea.set("x", x)
+        selectArea.set("y", y)
+        drawSelectArea(x, y, 1, 1)
+      } else if (!selectArea.has("x2") && !selectArea.has("y2")) {
+        let minX = Math.min(selectArea.get("x"), x)
+        let minY = Math.min(selectArea.get("y"), y)
+        let maxX = Math.max(selectArea.get("x"), x)
+        let maxY = Math.max(selectArea.get("y"), y)
+        selectArea.set("x2", maxX)
+        selectArea.set("y2", maxY)
+        selectArea.set("x", minX)
+        selectArea.set("y", minY)
+        drawSelectArea(minX, minY, maxX - minX + 1, maxY - minY + 1)
+      } else {
+        if (x >= selectArea.get("x") && x <= selectArea.get("x2") &&
+          y >= selectArea.get("y") && y <= selectArea.get("y2")) {
+          selectArea.set("lastClick", getKey(x, y))
+        } else {
+          selectArea.delete("x2")
+          selectArea.delete("y2")
+          drawSelectArea(x, y, 1, 1)
+          selectArea.set("x", x)
+          selectArea.set("y", y)
+        }
+      }
+      break;
   }
 }
 
-gameCanvas.oncontextmenu = event => {
+selectCanvas.onmousedown = event => {
+  const x = Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24)
+  const y = Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24)
+  if (selectArea.has("x2") && selectArea.has("y2")) {
+    if (x >= selectArea.get("x") && x <= selectArea.get("x2") &&
+      y >= selectArea.get("y") && y <= selectArea.get("y2")) {
+      selectArea.set("lastClick", getKey(x, y))
+    } else {
+      selectArea.clear()
+      drawSelectArea(x, y, 1, 1)
+    }
+  }
+}
+
+selectCanvas.onmouseleave = event => {
+  switch (currentDrawMode) {
+    case "select":
+      if (selectArea.has("lastClick"))
+        selectArea.delete("lastClick")
+      break;
+  }
+  miniMapCanvas.classList.remove("left")
+}
+
+selectCanvas.onmouseup = event => {
+  switch (currentDrawMode) {
+    case "select":
+      if (event.buttons === 0)
+        if (selectArea.has("lastClick"))
+          selectArea.delete("lastClick")
+      break;
+  }
+}
+
+selectCanvas.oncontextmenu = event => {
   if (argsEdit.style.display !== "none") return
   const x = Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24)
   const y = Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24)
@@ -148,11 +215,11 @@ gameCanvas.oncontextmenu = event => {
 
       drawBackground(x, y)
       if (background.get(key)) {
-        drawBlock(background.get(key).id, x, y, background.get(key).args[argument.get(background.get(key).id)?.r] ?? 0)
-        drawMiniMap(background.get(key).id, x, y)
+        drawAtPos(background.get(key).id, x, y, background.get(key).args[argument.get(background.get(key).id)?.r] ?? 0)
+        drawAtPosMinimap(background.get(key).id, x, y)
       }
-      drawBlock(fg.id, x, y, fg.args[fgArgs.r] ?? 0)
-      drawMiniMap(fg.id, x, y)
+      drawAtPos(fg.id, x, y, fg.args[fgArgs.r] ?? 0)
+      drawAtPosMinimap(fg.id, x, y)
     } else {
       argsEdit.style.display = "block"
       switch (fg.id) {
@@ -173,23 +240,28 @@ gameCanvas.oncontextmenu = event => {
   }
 }
 
-gameCanvas.onmousemove = event => {
+selectCanvas.onmousemove = event => {
   if (argsEdit.style.display !== "none") return
   const x = Math.floor((event.clientX - parseFloat(gameCanvas.style.left)) / 24)
   const y = Math.floor((event.clientY - parseFloat(gameCanvas.style.top)) / 24)
+
+  if (event.clientX < window.innerWidth / 2) miniMapCanvas.classList.add("left")
+  else miniMapCanvas.classList.remove("left")
   const key = getKey(x, y)
   switch (currentDrawMode) {
     case "draw":
-      switch (event.which) {
+      switch (event.buttons) {
         case 1:
+        case 2:
         case 3:
           placeBlock(x, y, lastArg(event, key))
           break;
       }
       break;
     case "fill":
-      switch (event.which) {
+      switch (event.buttons) {
         case 1:
+        case 2:
         case 3:
           fillBlock(x, y, background.get(key), foreground.get(key), lastArg(event, key))
           drawCanvas(false)
@@ -197,10 +269,31 @@ gameCanvas.onmousemove = event => {
       }
       break;
     case "replace":
-      switch (event.which) {
+      switch (event.buttons) {
         case 1:
+        case 2:
         case 3:
           replaceBlock(getLayer(findBlock(currentId)[0]).get(key), lastArg(event, key))
+          break;
+      }
+      break;
+    case "select":
+      switch (event.buttons) {
+        case 1:
+        case 2:
+        case 3:
+          if (selectArea.has("lastClick")) {
+            if (readKey(selectArea.get("lastClick")).x !== x || readKey(selectArea.get("lastClick")).y !== y) {
+              let changeX = x - readKey(selectArea.get("lastClick")).x
+              let changeY = y - readKey(selectArea.get("lastClick")).y
+              selectArea.set("lastClick", key)
+              selectArea.set("x", selectArea.get("x") + changeX)
+              selectArea.set("x2", selectArea.get("x2") + changeX)
+              selectArea.set("y", selectArea.get("y") + changeY)
+              selectArea.set("y2", selectArea.get("y2") + changeY)
+              drawSelectArea(selectArea.get("x"), selectArea.get("y"), selectArea.get("x2") - selectArea.get("x") + 1, selectArea.get("y2") - selectArea.get("y") + 1)
+            }
+          }
           break;
       }
       break;
@@ -213,7 +306,7 @@ areas.forEach(element => {
   element.onclick = () => {
     document.querySelector('button.selected')?.classList.remove('selected')
     element.classList.add('selected')
-    drawUiFull(element.value)
+    drawFullUi(element.value)
     currentLayer = element.value
   }
 })
@@ -247,11 +340,16 @@ function generateStr(strArr) {
   let len = strArr[0].length
   strArr.unshift(Array(len).fill(1).join(""))
   strArr = strArr.join("")
-  return [parseInt(strArr, 2).toString(36), len]
+  return `${parseInt(strArr, 2).toString(36)},${len}`
 }
 
 function getKey(x, y) {
   return `${x},${y}`
+}
+
+function readKey(key) {
+  key = key.split(",")
+  return { x: key[0], y: key[1] }
 }
 
 function lastArg(event, key) {
@@ -271,12 +369,12 @@ function drawBackground(x, y) {
   gameCtx.drawImage(ground, x * 24, y * 24, 24, 24)
 }
 
-function drawUi(id, x, y) {
+function drawUiAtPos(id, x, y) {
   uiCtx.drawImage(ground, x, y, 24, 24)
   uiCtx.drawImage(image, (id & 15) * 25, Math.floor(id / 16) * 25, 24, 24, x, y, 24, 24)
 }
 
-function drawBlock(id, x, y, angle) {
+function drawAtPos(id, x, y, angle) {
   gameCtx.save();
   gameCtx.translate(x * 24, y * 24);
   gameCtx.rotate(angle * Math.PI / 2);
@@ -285,7 +383,14 @@ function drawBlock(id, x, y, angle) {
   gameCtx.restore();
 }
 
-function drawMiniMap(id, x, y) {
+window.drawSelectArea = drawSelectArea
+function drawSelectArea(x, y, w, h) {
+  selectCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height)
+  selectCtx.fillStyle = getComputedStyle(selectCanvas).getPropertyValue("--selectColor")
+  selectCtx.fillRect(x * 24, y * 24, w * 24, h * 24)
+}
+
+function drawAtPosMinimap(id, x, y) {
   if (mapColor.get(id) == -1) return
   miniMapCtx.beginPath()
   miniMapCtx.rect(x * miniMapSize, y * miniMapSize, miniMapSize, miniMapSize)
@@ -294,7 +399,7 @@ function drawMiniMap(id, x, y) {
   miniMapCtx.fill()
 }
 
-function drawUiFull(p) {
+function drawFullUi(p) {
   let j = 0
   let k = 0
   clearUi()
@@ -307,7 +412,7 @@ function drawUiFull(p) {
         uiCtx.stroke()
       }
       clickAreas.push([(24 + j) % (ui.width - 48), Math.floor((24 + j) / (ui.width - 48)) * 30 + 12, k, p])
-      drawUi(k, (24 + j) % (ui.width - 48), Math.floor((24 + j) / (ui.width - 48)) * 30 + 12)
+      drawUiAtPos(k, (24 + j) % (ui.width - 48), Math.floor((24 + j) / (ui.width - 48)) * 30 + 12)
       j += 25
     }
     k++
@@ -332,20 +437,93 @@ function moveScreen() {
   const speed = 10
   const left = keyboard.has(37) || keyboard.has(65)
   const right = keyboard.has(39) || keyboard.has(68)
-  const down = keyboard.has(38) || keyboard.has(87)
-  const up = keyboard.has(40) || keyboard.has(83)
-  if (down ^ up) {
-    if (down) {
+  const up = keyboard.has(38) || keyboard.has(87)
+  const down = keyboard.has(40) || keyboard.has(83)
+  const cut = keyboard.has(17) && keyboard.has(88)
+  const copy = keyboard.has(17) && keyboard.has(67)
+  const paste = keyboard.has(17) && keyboard.has(86)
+  const deleteBlocks = keyboard.has(46) || keyboard.has(8)
+  if (up ^ down) {
+    if (up) {
       gameCanvas.style.top = parseFloat(gameCanvas.style.top) + speed + "px"
+      selectCanvas.style.top = gameCanvas.style.top
     } else {
       gameCanvas.style.top = parseFloat(gameCanvas.style.top) - speed + "px"
+      selectCanvas.style.top = gameCanvas.style.top
     }
   }
   if (left ^ right) {
     if (left) {
       gameCanvas.style.left = parseFloat(gameCanvas.style.left) + speed + "px"
+      selectCanvas.style.left = gameCanvas.style.left
     } else {
       gameCanvas.style.left = parseFloat(gameCanvas.style.left) - speed + "px"
+      selectCanvas.style.left = gameCanvas.style.left
+    }
+  }
+  //minX, minY, maxX - minX + 1, maxY - minY + 1
+  if (currentDrawMode === "select") {
+    if (deleteBlocks) {
+      if (copys.get("delete")) return
+      for (let x = 0; x < selectArea.get("x2") - selectArea.get("x") + 1; x++) {
+        for (let y = 0; y < selectArea.get("y2") - selectArea.get("y") + 1; y++) {
+          foreground.set(getKey(x + selectArea.get("x"), y + selectArea.get("y")), makeBlock(0))
+          background.set(getKey(x + selectArea.get("x"), y + selectArea.get("y")), makeBlock(0))
+        }
+      }
+      drawCanvas(false)
+      copys.set("delete", true)
+    } else if (cut) {
+      if (copys.get("cut")) return
+      const fg = new Map()
+      const bg = new Map()
+      for (let x = 0; x < selectArea.get("x2") - selectArea.get("x") + 1; x++) {
+        for (let y = 0; y < selectArea.get("y2") - selectArea.get("y") + 1; y++) {
+          fg.set(getKey(x, y), foreground.get(getKey(x + selectArea.get("x"), y + selectArea.get("y"))))
+          bg.set(getKey(x, y), background.get(getKey(x + selectArea.get("x"), y + selectArea.get("y"))))
+          foreground.set(getKey(x + selectArea.get("x"), y + selectArea.get("y")), makeBlock(0))
+          background.set(getKey(x + selectArea.get("x"), y + selectArea.get("y")), makeBlock(0))
+        }
+      }
+      copys.set("fg", fg)
+      copys.set("bg", bg)
+      drawCanvas(false)
+      copys.set("cut", true)
+    } else if (copy) {
+      if (copys.get("copy")) return
+      const fg = new Map()
+      const bg = new Map()
+      for (let x = 0; x < selectArea.get("x2") - selectArea.get("x") + 1; x++) {
+        for (let y = 0; y < selectArea.get("y2") - selectArea.get("y") + 1; y++) {
+          fg.set(getKey(x, y), foreground.get(getKey(x + selectArea.get("x"), y + selectArea.get("y"))))
+          bg.set(getKey(x, y), background.get(getKey(x + selectArea.get("x"), y + selectArea.get("y"))))
+        }
+      }
+      copys.set("fg", fg)
+      copys.set("bg", bg)
+      copys.set("copy", true)
+    } else if (paste) {
+      if (copys.get("paste")) return
+      if (copys.has("fg") && copys.has("bg")) {
+        let x = 0;
+        let y = 0;
+        while (copys.get("fg").get(getKey(x, y)) !== undefined) {
+          while (copys.get("fg").get(getKey(x, y)) !== undefined) {
+            if (x + selectArea.get("x") < 0 || x + selectArea.get("x") > worldWidth) continue
+            if (y + selectArea.get("y") < 0 || y + selectArea.get("y") > worldHeight) continue
+            foreground.set(getKey(x + selectArea.get("x"), y + selectArea.get("y")), copys.get("fg").get(getKey(x, y)))
+            background.set(getKey(x + selectArea.get("x"), y + selectArea.get("y")), copys.get("bg").get(getKey(x, y)))
+            y++
+          }
+          selectArea.set("y2", y + selectArea.get("y") - 1)
+          x++
+          y = 0;
+        }
+        selectArea.set("x2", x + selectArea.get("x") - 1)
+      }
+      drawSelectArea(selectArea.get("x"), selectArea.get("y"), selectArea.get("x2") - selectArea.get("x") + 1, selectArea.get("y2") - selectArea.get("y") + 1)
+      copys.set("paste", true)
+      drawCanvas(false)
     }
   }
 }
@@ -355,10 +533,14 @@ function drawCanvas(toggle) {
   if (toggle) {
     gameCanvas.width = worldWidth * 24
     gameCanvas.height = worldHeight * 24
+    selectCanvas.width = worldWidth * 24
+    selectCanvas.height = worldHeight * 24
     miniMapCanvas.height = worldHeight * miniMapSize
     miniMapCanvas.width = worldWidth * miniMapSize
     gameCanvas.style.left = "0px"
     gameCanvas.style.top = "0px"
+    selectCanvas.style.left = "0px"
+    selectCanvas.style.top = "0px"
   }
 
   clear()
@@ -367,24 +549,26 @@ function drawCanvas(toggle) {
 
   for (const [key, value] of background) {
     if (value.id == 0) continue
-    drawBlock(value.id, ...key.split(","), value.args[argument.get(value.id)?.r] ?? 0)
-    drawMiniMap(value.id, ...key.split(","))
+    drawAtPos(value.id, ...key.split(","), value.args[argument.get(value.id)?.r] ?? 0)
+    drawAtPosMinimap(value.id, ...key.split(","))
   }
   for (const [key, value] of foreground) {
     if (value.id == 0) continue
-    drawBlock(value.id, ...key.split(","), value.args[argument.get(value.id)?.r] ?? 0)
-    drawMiniMap(value.id, ...key.split(","))
+    drawAtPos(value.id, ...key.split(","), value.args[argument.get(value.id)?.r] ?? 0)
+    drawAtPosMinimap(value.id, ...key.split(","))
   }
 }
 
 //setup
 gameCanvas.style.left = "0px"
 gameCanvas.style.top = "0px"
+selectCanvas.style.left = "0px"
+selectCanvas.style.top = "0px"
 function loop() {
   requestAnimationFrame(loop)
   moveScreen()
   ui.width = 906
-  drawUiFull(currentLayer)
+  drawFullUi(currentLayer)
 }
 window.onload = () => {
   for (let y = 0; y < worldHeight; y++) {
@@ -398,12 +582,15 @@ window.onload = () => {
 }
 window.foreground = foreground
 window.background = background
+window.selectArea = selectArea
+window.copys = copys
 
 //emptyblock
 function makeBlock(id) {
   return new Block(id, ...(argument.get(id) ?? []).map(value => value[0]))
 }
 
+//place functions
 function placeBlock(x, y, newBlock) {
   const key = getKey(x, y)
   if (typeof newBlock == "number") {
@@ -415,15 +602,15 @@ function placeBlock(x, y, newBlock) {
   }
   else getLayer(findBlock(newBlock.id)[0]).set(key, newBlock)
 
-  drawMiniMap(12, x, y)
+  drawAtPosMinimap(12, x, y)
   drawBackground(x, y)
   if (background.get(key).id !== 0) {
-    drawBlock(background.get(key).id, x, y, background.get(key).args[argument.get(background.get(key).id)?.r] ?? 0)
-    drawMiniMap(background.get(key).id, x, y)
+    drawAtPos(background.get(key).id, x, y, background.get(key).args[argument.get(background.get(key).id)?.r] ?? 0)
+    drawAtPosMinimap(background.get(key).id, x, y)
   }
   if (foreground.get(key).id !== 0) {
-    drawBlock(foreground.get(key).id, x, y, foreground.get(key).args[argument.get(foreground.get(key).id)?.r] ?? 0)
-    drawMiniMap(foreground.get(key).id, x, y)
+    drawAtPos(foreground.get(key).id, x, y, foreground.get(key).args[argument.get(foreground.get(key).id)?.r] ?? 0)
+    drawAtPosMinimap(foreground.get(key).id, x, y)
   }
 }
 
@@ -505,6 +692,10 @@ window.addEventListener("keydown", event => {
 
 window.addEventListener("keyup", event => {
   keyboard.delete(event.which)
+  copys.delete("copy")
+  copys.delete("cut")
+  copys.delete("paste")
+  copys.delete("delete")
 })
 
 window.addEventListener("message", event => {
@@ -522,6 +713,10 @@ window.addEventListener("message", event => {
         keyboard.set(value[0], true);
       } else {
         keyboard.delete(value[0]);
+        copys.delete("copy")
+        copys.delete("cut")
+        copys.delete("delete")
+        copys.delete("paste")
       }
     }
   }
@@ -591,6 +786,8 @@ function BlockHandeler(initMessage) { //false = 0
   console.log(initMessage.get(9), worldWidth, initMessage.get(10), worldHeight)
   gameCanvas.style.left = "0px"
   gameCanvas.style.top = "0px"
+  selectCanvas.style.left = "0px"
+  selectCanvas.style.top = "0px"
   let index = 0;
   for (let y = 0; y < worldHeight; y++) {
     for (let x = 0; x < worldWidth; x++) {
@@ -655,4 +852,6 @@ function CheckDifference(initMessage) {
   }
 }
 
-//image imports, text, shapes, etc..
+//Select, Cut, Copy, Paste, Image import, Text Fill, Text Stroke, Shape Fill, Shape Stroke, fill area, replace, etc...
+
+//done fill area, replace, Select, Cut, Copy, Paste
