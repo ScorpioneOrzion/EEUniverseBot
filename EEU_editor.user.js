@@ -40,7 +40,7 @@
     case "https://ee-universe.com/game/index.html":
       var editor = document.createElement("iframe");
       editor.src = "https://scorpioneorzion.github.io/EEUniverseBot/bot.html";
-      editor.style = "width: 100vw;height: 100vh;z-index: 1; position: absolute;"
+      editor.style = "width: 100vw;height: 100vh;z-index: 1; position: absolute; top: 0px;"
       editor.style.display = "none"
       window.onload = () => {
         document.querySelector("body > script:nth-child(6)").parentElement.appendChild(editor);
