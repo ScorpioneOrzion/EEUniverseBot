@@ -14,6 +14,7 @@
   'use strict';
   switch (window.location.href) {
     case "https://ee-universe.com/":
+    case "http://ee-universe.com/":
       var token = document.cookie.split("; ").filter(a => a.includes("token="))[0];
       var game = document.querySelector("#game-aspect > iframe:nth-child(1)");
       var items = document.createElement("div");
@@ -38,6 +39,7 @@
       }
       break;
     case "https://ee-universe.com/game/index.html":
+    case "http://ee-universe.com/game/index.html":
       var editor = document.createElement("iframe");
       editor.src = "https://scorpioneorzion.github.io/EEUniverseBot/bot.html";
       editor.style = "width: 100vw;height: 100vh;z-index: 1; position: absolute; top: 0px;"
@@ -48,7 +50,7 @@
 
       window.addEventListener("message", event => {
         var origin = event.origin || event.originalEvent.origin;
-        if (origin !== "https://ee-universe.com") return
+        if (origin !== "https://ee-universe.com" && origin !== "http://ee-universe.com") return
         if (event.data == "block") {
           editor.style.display = "none"
         } else if (event.data == "none") {
@@ -56,6 +58,15 @@
         } else if (typeof event.data == "string" && event.data.includes("token")) {
           editor.contentWindow.postMessage(event.data, editor.src)
         }
+        fetch(document.querySelector("body > script:nth-child(6)").src).then(
+          value => value.text()).then(d => {
+            editor.contentWindow.postMessage(
+              JSON.stringify({
+                type: "blocks",
+                data: JSON.parse(d.slice(/\{(\w(\w+)):\{name:"\w\2/.exec(d).index, d.lastIndexOf("gt.Edit") + 11).replace(/[a-zA-Z\$][a-zA-Z\$]\.(ACTION|FG|BG),new (class extends [a-zA-Z\$][a-zA-Z\$]\{.+?\}|[a-zA-Z\$][a-zA-Z\$])\(("[\w/]+")([,!\d]+)?\)/g, `$3$4`).replace(/(\w+):/g, `"$1":`).replace(/\[\.(\d+)/g, `[0.$1`).replace(/,\w\w\.(Edit|None|multiJump|global|Owner|God|Crown|highJump)/g, ``).replace(/!0/g, true).replace(/!1/g, false))
+              })
+              , editor.src)
+          })
       })
 
       document.addEventListener("keydown", e => {

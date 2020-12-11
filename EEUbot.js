@@ -709,7 +709,9 @@ window.addEventListener("message", event => {
       })()
     } else {
       const value = JSON.parse(event.data);
-      if (value[1]) {
+      if (value.type == "blocks") {
+        console.log(value.data)
+      } else if (value[1]) {
         keyboard.set(value[0], true);
       } else {
         keyboard.delete(value[0]);
